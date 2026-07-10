@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { User, Mail, Lock, Eye, EyeOff, Phone, Globe, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { api } from '../services/api';
 
 interface RegisterProps {
   onNavigateToLogin: () => void;
@@ -86,11 +87,20 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
       timeZone
     };
 
-    setTimeout(() => {
+    try {
+      const response = await api.register(payload);
+      setSuccess(response.message || 'Registration successful!');
+      setRegisteredData(JSON.stringify(response, null, 2));
+    } catch (err: any) {
+      console.error('Registration API error:', err);
+      if (err.message === 'Failed to fetch') {
+        setError('Failed to connect to the server. Please check if the API backend is running, CORS is enabled, and your internet connection is active.');
+      } else {
+        setError(err.message || 'Registration failed.');
+      }
+    } finally {
       setLoading(false);
-      setSuccess('Registration successful!');
-      setRegisteredData(JSON.stringify(payload, null, 2));
-    }, 1200);
+    }
   };
 
   return (
@@ -184,7 +194,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
               <input
                 id="firstName"
                 type="text"
-                placeholder="John"
+                placeholder="first name"
                 className="form-input"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
@@ -201,7 +211,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
               <input
                 id="lastName"
                 type="text"
-                placeholder="Michel"
+                placeholder="last name"
                 className="form-input"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
@@ -219,7 +229,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
             <input
               id="email"
               type="email"
-              placeholder="user@example.com"
+              placeholder="email"
               className="form-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -236,7 +246,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
             <input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="••••••••"
+              placeholder="password"
               className="form-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -262,7 +272,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
             <input
               id="phone"
               type="tel"
-              placeholder="9876543210"
+              placeholder="phone"
               className="form-input"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
