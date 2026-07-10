@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { api } from '../services/api';
 
 interface LoginProps {
   onNavigateToRegister: () => void;
@@ -46,23 +47,22 @@ export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onLoginSucce
 
     setLoading(true);
     
-    // Simulated mock authentication logic entirely inside the component
-    setTimeout(() => {
-      setLoading(false);
-      if (email === 'admin@example.com' && password === 'admin123') {
-        setSuccess('Login successful!');
-        setTimeout(() => {
-          onLoginSuccess(email);
-        }, 800);
-      } else if (email.endsWith('@example.com') && password.length >= 6) {
-        setSuccess(`Welcome, ${email.split('@')[0].toUpperCase()}!`);
-        setTimeout(() => {
-          onLoginSuccess(email);
-        }, 800);
+    try {
+      const response = await api.login(email, password);
+      setSuccess(response.message || 'Login successful!');
+      setTimeout(() => {
+        onLoginSuccess(response.user.email);
+      }, 800);
+    } catch (err: any) {
+      console.error('Login API error:', err);
+      if (err.message === 'Failed to fetch') {
+        setError('Failed to connect to the server. Please check if the API backend is running, CORS is enabled, and your internet connection is active.');
       } else {
-        setError('Invalid email or password. Hint: Use admin@example.com / admin123 or any @example.com email.');
+        setError(err.message || 'Invalid email or password.');
       }
-    }, 1200); // Simulate network delay
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -82,7 +82,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onLoginSucce
         }}>
           <Lock style={{ color: 'white', width: '28px', height: '28px' }} />
         </div>
-        <h1 className="title">Welcome Back</h1>
+        <h1 className="title">Welcome</h1>
         <p className="subtitle">Sign in to your e-commerce dashboard</p>
       </div>
 
@@ -110,7 +110,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onLoginSucce
             <input
               id="email"
               type="email"
-              placeholder="name@example.com"
+              placeholder="email"
               className="form-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -129,7 +129,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onLoginSucce
             <input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="••••••••"
+              placeholder="password"
               className="form-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -195,7 +195,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onLoginSucce
       }}>
         <strong>Demo Credentials:</strong><br />
         Email: <code style={{ color: 'var(--primary-300)' }}>admin@example.com</code><br />
-        Password: <code style={{ color: 'var(--primary-300)' }}>admin123</code>
+        Password: <code style={{ color: 'var(--primary-300)' }}>Admin@123</code>
       </div>
     </div>
   );
