@@ -4,7 +4,7 @@ import { api } from '../services/api';
 
 interface RegisterProps {
   onNavigateToLogin: () => void;
-  onRegisterSuccess: (email: string) => void;
+  onRegisterSuccess: (email: string, token: string) => void;
 }
 
 const TIMEZONES = [
@@ -31,6 +31,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [registeredData, setRegisteredData] = useState<string | null>(null);
+  const [regToken, setRegToken] = useState<string>('');
 
   const validateForm = (): boolean => {
     if (!firstName.trim()) {
@@ -91,6 +92,14 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
       const response = await api.register(payload);
       setSuccess(response.message || 'Registration successful!');
       setRegisteredData(JSON.stringify(response, null, 2));
+      
+      const accessToken = response.data?.accessToken || response.data?.token || '';
+      const refreshToken = response.data?.refreshToken || '';
+      
+      if (accessToken) localStorage.setItem('accessToken', accessToken);
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+      
+      setRegToken(accessToken);
     } catch (err: any) {
       console.error('Registration API error:', err);
       if (err.message === 'Failed to fetch') {
@@ -163,7 +172,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
               <button
                 type="button"
                 className="btn-primary"
-                onClick={() => onRegisterSuccess(email)}
+                onClick={() => onRegisterSuccess(email, regToken)}
                 style={{
                   padding: '10px 16px',
                   fontSize: '13px',

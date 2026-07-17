@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowRight } from 'lucide-react';
 import { api } from '../services/api';
 
 interface LoginProps {
   onNavigateToRegister: () => void;
-  onLoginSuccess: (email: string) => void;
+  onNavigateToForgotPassword: () => void;
+  onLoginSuccess: (email: string, token: string) => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onLoginSuccess }) => {
+export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onNavigateToForgotPassword, onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   // Simple client-side validation
   const validateForm = (): boolean => {
@@ -41,7 +41,6 @@ export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onLoginSucce
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
 
     if (!validateForm()) return;
 
@@ -49,9 +48,15 @@ export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onLoginSucce
     
     try {
       const response = await api.login(email, password);
-      setSuccess(response.message || 'Login successful!');
       setTimeout(() => {
-        onLoginSuccess(response.user.email);
+        const userEmail = response.data?.userInfo?.email || response.data?.user?.email || (response as any).email || email;
+        const accessToken = response.data?.accessToken || response.data?.token || '';
+        const refreshToken = response.data?.refreshToken || '';
+        
+        if (accessToken) localStorage.setItem('accessToken', accessToken);
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+
+        onLoginSuccess(userEmail, accessToken);
       }, 800);
     } catch (err: any) {
       console.error('Login API error:', err);
@@ -60,7 +65,6 @@ export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onLoginSucce
       } else {
         setError(err.message || 'Invalid email or password.');
       }
-    } finally {
       setLoading(false);
     }
   };
@@ -93,12 +97,6 @@ export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onLoginSucce
         </div>
       )}
 
-      {success && (
-        <div className="alert alert-success">
-          <CheckCircle2 style={{ flexShrink: 0, width: '18px', height: '18px' }} />
-          <span>{success}</span>
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} noValidate>
         <div className="form-group">
@@ -159,7 +157,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onLoginSucce
             <span className="custom-checkbox"></span>
             <span>Remember me</span>
           </label>
-          <a href="#forgot" className="link" onClick={(e) => { e.preventDefault(); alert('Reset password flow is not implemented yet.'); }}>
+          <a href="#forgot" className="link" onClick={(e) => { e.preventDefault(); onNavigateToForgotPassword(); }}>
             Forgot password?
           </a>
         </div>
@@ -194,8 +192,8 @@ export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onLoginSucce
         lineHeight: '1.5'
       }}>
         <strong>Demo Credentials:</strong><br />
-        Email: <code style={{ color: 'var(--primary-300)' }}>admin@example.com</code><br />
-        Password: <code style={{ color: 'var(--primary-300)' }}>Admin@123</code>
+        Email: <code style={{ color: 'var(--primary-300)' }}>user@example.com</code><br />
+        Password: <code style={{ color: 'var(--primary-300)' }}>Password123</code>
       </div>
     </div>
   );
