@@ -25,15 +25,15 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [timeZone, setTimeZone] = useState('Asia/Kolkata');
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [registeredData, setRegisteredData] = useState<string | null>(null);
   const [regToken, setRegToken] = useState<string>('');
+  const [verifyToken, setVerifyToken] = useState<string>('');
   const [verifyTokenFromServer, setVerifyTokenFromServer] = useState<string | null>(null);
-  const [verifyTokenInput, setVerifyTokenInput] = useState<string>('');
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [verificationLoading, setVerificationLoading] = useState<boolean>(false);
   const [verificationSuccess, setVerificationSuccess] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
@@ -64,7 +64,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
       setError('Time zone is required');
       return false;
     }
-    
+
     // Phone number is optional. If provided, validate formatting.
     const cleanPhone = phone.replace(/[\s-()]/g, '');
     if (cleanPhone && !/^\d{10}$/.test(cleanPhone)) {
@@ -78,7 +78,6 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
     e.preventDefault();
     setError(null);
     setSuccess(null);
-    setRegisteredData(null);
 
     if (!validateForm()) return;
 
@@ -95,20 +94,19 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
 
     try {
       const response = await api.register(payload);
+      const token = response.data?.verifyToken || '';
       setSuccess(response.message || 'Registration successful! Please verify your email.');
-      setRegisteredData(JSON.stringify(response, null, 2));
-      
-      const verifyToken = response.data?.verifyToken || '';
-      if (verifyToken) {
-        setVerifyTokenFromServer(verifyToken);
+      if (token) {
+        setVerifyTokenFromServer(token);
+        setIsVerifying(true);
       }
-      
+
       const accessToken = response.data?.accessToken || response.data?.token || '';
       const refreshToken = response.data?.refreshToken || '';
-      
+
       if (accessToken) localStorage.setItem('accessToken', accessToken);
       if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-      
+
       setRegToken(accessToken);
     } catch (err: any) {
       console.error('Registration API error:', err);
@@ -127,17 +125,16 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
     setError(null);
     setVerificationLoading(true);
 
-    if (!verifyTokenInput.trim()) {
+    if (!verifyToken.trim()) {
       setError('Verification token is required');
       setVerificationLoading(false);
       return;
     }
 
     try {
-      const response = await api.verifyEmail(verifyTokenInput.trim());
+      const response = await api.verifyEmail(verifyToken.trim());
       setVerificationSuccess(true);
       setSuccess(response.message || 'Email verified successfully. Your account is now active.');
-      setRegisteredData(JSON.stringify(response, null, 2));
     } catch (err: any) {
       console.error('Email verification error:', err);
       if (err.message === 'Failed to fetch') {
@@ -164,10 +161,11 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
         <button
           type="button"
           onClick={() => {
-            if (verifyTokenFromServer && !verificationSuccess) {
-              setVerifyTokenFromServer(null);
+            if (isVerifying && !verificationSuccess) {
+              setIsVerifying(false);
               setSuccess(null);
               setError(null);
+              setVerifyToken('');
             } else {
               onNavigateToLogin();
             }
@@ -188,20 +186,20 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
           }}
           className="link"
         >
-          <ArrowLeft size={16} /> {verifyTokenFromServer && !verificationSuccess ? 'Back to Register' : 'Back to Login'}
+          <ArrowLeft size={16} /> {isVerifying && !verificationSuccess ? 'Back to Register' : 'Back to Login'}
         </button>
         <h1 className="title">
-          {verificationSuccess 
-            ? 'Account Verified' 
-            : verifyTokenFromServer 
-              ? 'Verify Your Email' 
+          {verificationSuccess
+            ? 'Account Verified'
+            : isVerifying
+              ? 'Verify Your Email'
               : 'Create Account'}
         </h1>
         <p className="subtitle">
-          {verificationSuccess 
-            ? 'Your account is now active' 
-            : verifyTokenFromServer 
-              ? 'Enter the token to activate your account' 
+          {verificationSuccess
+            ? 'Your account is now active'
+            : isVerifying
+              ? 'Enter the token to activate your account'
               : 'Join our premium e-commerce dashboard'}
         </p>
       </div>
@@ -219,7 +217,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
             <CheckCircle2 style={{ flexShrink: 0, width: '18px', height: '18px' }} />
             <span>{success}</span>
           </div>
-          {!verifyTokenFromServer && regToken && (
+          {!isVerifying && regToken && (
             <div style={{ width: '100%', marginTop: '8px' }}>
               <button
                 type="button"
@@ -257,49 +255,51 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
             Proceed to Login
           </button>
         </div>
-      ) : verifyTokenFromServer ? (
+      ) : isVerifying ? (
         <div>
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            padding: '16px',
-            borderRadius: '12px',
-            marginBottom: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px'
-          }}>
-            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Verification Token
-              </p>
-              <code style={{ fontSize: '14px', color: 'var(--primary-400)', fontFamily: 'monospace', fontWeight: 600 }}>
-                {verifyTokenFromServer}
-              </code>
+          {verifyTokenFromServer && (
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              padding: '16px',
+              borderRadius: '12px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px'
+            }}>
+              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Verification Token
+                </p>
+                <code style={{ fontSize: '14px', color: 'var(--primary-400)', fontFamily: 'monospace', fontWeight: 600 }}>
+                  {verifyTokenFromServer}
+                </code>
+              </div>
+              <button
+                type="button"
+                onClick={copyToClipboard}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: 'var(--text-secondary)',
+                  borderRadius: '8px',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  transition: 'var(--transition-fast)'
+                }}
+                title="Copy token"
+              >
+                {copied ? <Check size={16} style={{ color: '#10b981' }} /> : <Copy size={16} />}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={copyToClipboard}
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: 'var(--text-secondary)',
-                borderRadius: '8px',
-                width: '36px',
-                height: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                flexShrink: 0,
-                transition: 'var(--transition-fast)'
-              }}
-              title="Copy token"
-            >
-              {copied ? <Check size={16} style={{ color: '#10b981' }} /> : <Copy size={16} />}
-            </button>
-          </div>
+          )}
 
           <form onSubmit={handleVerifySubmit} noValidate>
             <div className="form-group">
@@ -313,8 +313,8 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
                   type="text"
                   placeholder="Enter your verification token"
                   className="form-input"
-                  value={verifyTokenInput}
-                  onChange={(e) => setVerifyTokenInput(e.target.value)}
+                  value={verifyToken}
+                  onChange={(e) => setVerifyToken(e.target.value)}
                   disabled={verificationLoading}
                   style={{ paddingLeft: '44px', paddingRight: '16px' }}
                 />
@@ -468,7 +468,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
         </form>
       )}
 
-      {!verifyTokenFromServer && (
+      {!isVerifying && (
         <div className="footer-text">
           Already have an account?{' '}
           <a href="#login" className="link" onClick={(e) => { e.preventDefault(); onNavigateToLogin(); }}>
