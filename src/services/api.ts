@@ -18,6 +18,7 @@ export interface AuthResponse {
     refreshToken?: string;
     user?: User;
     token?: string;
+    verifyToken?: string;
     userInfo?: {
       id: number;
       firstName: string;
@@ -112,6 +113,20 @@ export const api = {
       body: JSON.stringify(payload),
     });
     return await handleResponse<AuthResponse>(response);
+  },
+
+  /**
+   * Verify email using token
+   */
+  async verifyEmail(verifyToken: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ verifyToken })
+    });
+    return await handleResponse<any>(response);
   },
 
   /**
@@ -249,6 +264,21 @@ export const api = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+    return await handleResponse<any>(response);
+  },
+
+  /**
+   * Change user password
+   */
+  async changePassword(token: string, payload: { oldPassword: string; newPassword: string }): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(payload)
     });

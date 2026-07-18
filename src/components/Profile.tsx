@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { User as UserIcon, Mail, Phone, Globe, Calendar, ArrowLeft, AlertCircle, Shield, Edit, Save, X, CheckCircle2 } from 'lucide-react';
+import { User as UserIcon, Mail, Phone, Globe, Calendar, ArrowLeft, AlertCircle, Shield, Edit, Save, X, CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react';
 import { api } from '../services/api';
 import type { ProfileData } from '../services/api';
 
@@ -23,6 +23,7 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<'profile' | 'password'>('profile');
 
   // Edit states
   const [isEditing, setIsEditing] = useState(false);
@@ -34,6 +35,51 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
+
+  // Change password states
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    if (!oldPassword) {
+      setPasswordError('Current password is required.');
+      return;
+    }
+    if (!newPassword) {
+      setPasswordError('New password is required.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters long.');
+      return;
+    }
+
+    setPasswordLoading(true);
+
+    try {
+      const response = await api.changePassword(token, { oldPassword, newPassword });
+      if (response.apiStatus) {
+        setPasswordSuccess(response.message || 'Password changed successfully.');
+        setOldPassword('');
+        setNewPassword('');
+      } else {
+        setPasswordError(response.message || 'Failed to change password.');
+      }
+    } catch (err: any) {
+      setPasswordError(err.message || 'An unexpected error occurred.');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -168,6 +214,130 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
 
   const userInitials = `${profile.firstName.charAt(0)}${profile.lastName ? profile.lastName.charAt(0) : ''}`.toUpperCase();
 
+  if (view === 'password') {
+    return (
+      <div className="glass-card" style={{ maxWidth: '500px', margin: '40px auto', padding: '32px' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <button
+            onClick={() => {
+              setView('profile');
+              setPasswordError(null);
+              setPasswordSuccess(null);
+              setOldPassword('');
+              setNewPassword('');
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              transition: 'var(--transition-fast)'
+            }}
+            className="link"
+          >
+            <ArrowLeft size={16} /> Back to Profile
+          </button>
+        </div>
+
+        <h1 className="title" style={{ marginBottom: '8px', fontSize: '24px' }}>Change Password</h1>
+        <p className="subtitle" style={{ marginBottom: '24px' }}>Update your security credentials</p>
+
+        {passwordError && (
+          <div className="alert alert-error" style={{ marginBottom: '20px' }}>
+            <AlertCircle style={{ flexShrink: 0, width: '18px', height: '18px' }} />
+            <span>{passwordError}</span>
+          </div>
+        )}
+        
+        {passwordSuccess && (
+          <div className="alert alert-success" style={{ marginBottom: '20px' }}>
+            <CheckCircle2 style={{ flexShrink: 0, width: '18px', height: '18px' }} />
+            <span>{passwordSuccess}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleChangePassword}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+            {/* Old Password */}
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="oldPassword" style={{ display: 'block', marginBottom: '8px' }}>
+                Current Password
+              </label>
+              <div className="form-input-wrapper">
+                <Lock className="input-icon-start" size={18} />
+                <input
+                  id="oldPassword"
+                  type={showOldPassword ? 'text' : 'password'}
+                  placeholder="Enter current password"
+                  className="form-input"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  disabled={passwordLoading}
+                  style={{ paddingLeft: '44px', paddingRight: '44px' }}
+                />
+                <button
+                  type="button"
+                  className="input-icon-end"
+                  onClick={() => setShowOldPassword(!showOldPassword)}
+                  disabled={passwordLoading}
+                >
+                  {showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            {/* New Password */}
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="newPassword" style={{ display: 'block', marginBottom: '8px' }}>
+                New Password
+              </label>
+              <div className="form-input-wrapper">
+                <Lock className="input-icon-start" size={18} />
+                <input
+                  id="newPassword"
+                  type={showNewPassword ? 'text' : 'password'}
+                  placeholder="Enter new password (min. 6 characters)"
+                  className="form-input"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={passwordLoading}
+                  style={{ paddingLeft: '44px', paddingRight: '44px' }}
+                />
+                <button
+                  type="button"
+                  className="input-icon-end"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  disabled={passwordLoading}
+                >
+                  {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={passwordLoading}
+            style={{ width: '100%' }}
+          >
+            {passwordLoading ? (
+              <span className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px', margin: '0 auto' }} />
+            ) : (
+              'Update Password'
+            )}
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="glass-card" style={{ maxWidth: '700px', margin: '0 auto', padding: '32px' }}>
       {/* Header section with back navigation */}
@@ -265,27 +435,50 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
           {isEditing ? 'Edit Profile Details' : 'Personal Details'}
         </h3>
         {!isEditing && (
-          <button
-            onClick={() => setIsEditing(true)}
-            style={{
-              background: 'rgba(139, 92, 246, 0.1)',
-              border: '1px solid rgba(139, 92, 246, 0.2)',
-              color: 'var(--primary-300)',
-              borderRadius: '20px',
-              padding: '6px 14px',
-              fontSize: '13px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'var(--transition-fast)'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)'}
-            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)'}
-          >
-            <Edit size={14} /> Edit Profile
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => setView('password')}
+              style={{
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid var(--border-card)',
+                color: 'var(--text-secondary)',
+                borderRadius: '20px',
+                padding: '6px 14px',
+                fontSize: '13px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'}
+            >
+              <Lock size={14} /> Change Password
+            </button>
+            <button
+              onClick={() => setIsEditing(true)}
+              style={{
+                background: 'rgba(139, 92, 246, 0.1)',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                color: 'var(--primary-300)',
+                borderRadius: '20px',
+                padding: '6px 14px',
+                fontSize: '13px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)'}
+            >
+              <Edit size={14} /> Edit Profile
+            </button>
+          </div>
         )}
       </div>
 
