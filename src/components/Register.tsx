@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { User, Mail, Lock, Eye, EyeOff, Phone, Globe, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, Phone, Globe, AlertCircle, CheckCircle2, ArrowLeft, Copy, Check } from 'lucide-react';
 import { api } from '../services/api';
 
 interface RegisterProps {
   onNavigateToLogin: () => void;
-  onRegisterSuccess: (email: string) => void;
+  onRegisterSuccess: (email: string, token: string) => void;
 }
 
 const TIMEZONES = [
@@ -25,12 +25,18 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [timeZone, setTimeZone] = useState('Asia/Kolkata');
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [registeredData, setRegisteredData] = useState<string | null>(null);
+  const [regToken, setRegToken] = useState<string>('');
+  const [verifyToken, setVerifyToken] = useState<string>('');
+  const [verifyTokenFromServer, setVerifyTokenFromServer] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
+  const [verificationLoading, setVerificationLoading] = useState<boolean>(false);
+  const [verificationSuccess, setVerificationSuccess] = useState<boolean>(false);
+  const [copied, setCopied] = useState<boolean>(false);
 
   const validateForm = (): boolean => {
     if (!firstName.trim()) {
@@ -58,7 +64,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
       setError('Time zone is required');
       return false;
     }
-    
+
     // Phone number is optional. If provided, validate formatting.
     const cleanPhone = phone.replace(/[\s-()]/g, '');
     if (cleanPhone && !/^\d{10}$/.test(cleanPhone)) {
@@ -72,7 +78,6 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
     e.preventDefault();
     setError(null);
     setSuccess(null);
-    setRegisteredData(null);
 
     if (!validateForm()) return;
 
@@ -89,8 +94,20 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
 
     try {
       const response = await api.register(payload);
-      setSuccess(response.message || 'Registration successful!');
-      setRegisteredData(JSON.stringify(response, null, 2));
+      const token = response.data?.verifyToken || '';
+      setSuccess(response.message || 'Registration successful! Please verify your email.');
+      if (token) {
+        setVerifyTokenFromServer(token);
+        setIsVerifying(true);
+      }
+
+      const accessToken = response.data?.accessToken || response.data?.token || '';
+      const refreshToken = response.data?.refreshToken || '';
+
+      if (accessToken) localStorage.setItem('accessToken', accessToken);
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+
+      setRegToken(accessToken);
     } catch (err: any) {
       console.error('Registration API error:', err);
       if (err.message === 'Failed to fetch') {
@@ -103,12 +120,56 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
     }
   };
 
+  const handleVerifySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setVerificationLoading(true);
+
+    if (!verifyToken.trim()) {
+      setError('Verification token is required');
+      setVerificationLoading(false);
+      return;
+    }
+
+    try {
+      const response = await api.verifyEmail(verifyToken.trim());
+      setVerificationSuccess(true);
+      setSuccess(response.message || 'Email verified successfully. Your account is now active.');
+    } catch (err: any) {
+      console.error('Email verification error:', err);
+      if (err.message === 'Failed to fetch') {
+        setError('Failed to connect to the server. Please check if the API backend is running.');
+      } else {
+        setError(err.message || 'Verification failed.');
+      }
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    if (verifyTokenFromServer) {
+      navigator.clipboard.writeText(verifyTokenFromServer);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <div className="glass-card" style={{ maxWidth: '540px' }}>
       <div style={{ marginBottom: '24px' }}>
         <button
           type="button"
-          onClick={onNavigateToLogin}
+          onClick={() => {
+            if (isVerifying && !verificationSuccess) {
+              setIsVerifying(false);
+              setSuccess(null);
+              setError(null);
+              setVerifyToken('');
+            } else {
+              onNavigateToLogin();
+            }
+          }}
           style={{
             background: 'none',
             border: 'none',
@@ -125,45 +186,43 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
           }}
           className="link"
         >
-          <ArrowLeft size={16} /> Back to Login
+          <ArrowLeft size={16} /> {isVerifying && !verificationSuccess ? 'Back to Register' : 'Back to Login'}
         </button>
-        <h1 className="title">Create Account</h1>
-        <p className="subtitle">Join our premium e-commerce dashboard</p>
+        <h1 className="title">
+          {verificationSuccess
+            ? 'Account Verified'
+            : isVerifying
+              ? 'Verify Your Email'
+              : 'Create Account'}
+        </h1>
+        <p className="subtitle">
+          {verificationSuccess
+            ? 'Your account is now active'
+            : isVerifying
+              ? 'Enter the token to activate your account'
+              : 'Join our premium e-commerce dashboard'}
+        </p>
       </div>
 
       {error && (
-        <div className="alert alert-error">
+        <div className="alert alert-error" style={{ marginBottom: '20px' }}>
           <AlertCircle style={{ flexShrink: 0, width: '18px', height: '18px' }} />
           <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div className="alert alert-success" style={{ flexDirection: 'column', gap: '8px' }}>
+        <div className="alert alert-success" style={{ flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <CheckCircle2 style={{ flexShrink: 0, width: '18px', height: '18px' }} />
             <span>{success}</span>
           </div>
-          {registeredData && (
+          {!isVerifying && regToken && (
             <div style={{ width: '100%', marginTop: '8px' }}>
-              <p style={{ fontSize: '12px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Generated Registration JSON Payload:</p>
-              <pre style={{
-                background: 'rgba(0, 0, 0, 0.4)',
-                padding: '12px',
-                borderRadius: '8px',
-                fontSize: '12px',
-                overflowX: 'auto',
-                color: '#a7f3d0',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                fontFamily: 'monospace',
-                marginBottom: '12px'
-              }}>
-                {registeredData}
-              </pre>
               <button
                 type="button"
                 className="btn-primary"
-                onClick={() => onRegisterSuccess(email)}
+                onClick={() => onRegisterSuccess(email, regToken)}
                 style={{
                   padding: '10px 16px',
                   fontSize: '13px',
@@ -185,152 +244,238 @@ export const Register: React.FC<RegisterProps> = ({ onNavigateToLogin, onRegiste
         </div>
       )}
 
-      <form onSubmit={handleSubmit} noValidate>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" htmlFor="firstName" style={{ display: 'block', marginBottom: '8px' }}>First Name <span style={{ color: 'var(--error)' }}>*</span></label>
-            <div className="form-input-wrapper">
-              <User className="input-icon-start" size={18} />
-              <input
-                id="firstName"
-                type="text"
-                placeholder="first name"
-                className="form-input"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                disabled={loading}
-                style={{ paddingLeft: '44px', paddingRight: '16px' }}
-              />
-            </div>
-          </div>
-
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" htmlFor="lastName" style={{ display: 'block', marginBottom: '8px' }}>Last Name <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>(Optional)</span></label>
-            <div className="form-input-wrapper">
-              <User className="input-icon-start" size={18} />
-              <input
-                id="lastName"
-                type="text"
-                placeholder="last name"
-                className="form-input"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                disabled={loading}
-                style={{ paddingLeft: '44px', paddingRight: '16px' }}
-              />
-            </div>
-          </div>
+      {verificationSuccess ? (
+        <div style={{ textAlign: 'center', padding: '16px 0' }}>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={onNavigateToLogin}
+            style={{ width: '100%' }}
+          >
+            Proceed to Login
+          </button>
         </div>
-
-        <div className="form-group">
-          <label className="form-label" htmlFor="email" style={{ display: 'block', marginBottom: '8px' }}>Email Address <span style={{ color: 'var(--error)' }}>*</span></label>
-          <div className="form-input-wrapper">
-            <Mail className="input-icon-start" size={18} />
-            <input
-              id="email"
-              type="email"
-              placeholder="email"
-              className="form-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-              autoComplete="email"
-            />
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label className="form-label" htmlFor="password" style={{ display: 'block', marginBottom: '8px' }}>Password <span style={{ color: 'var(--error)' }}>*</span></label>
-          <div className="form-input-wrapper">
-            <Lock className="input-icon-start" size={18} />
-            <input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="password"
-              className="form-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              autoComplete="new-password"
-            />
-            <button
-              type="button"
-              className="input-icon-end"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-              disabled={loading}
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label className="form-label" htmlFor="phone" style={{ display: 'block', marginBottom: '8px' }}>Phone Number <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>(Optional)</span></label>
-          <div className="form-input-wrapper">
-            <Phone className="input-icon-start" size={18} />
-            <input
-              id="phone"
-              type="tel"
-              placeholder="phone"
-              className="form-input"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label className="form-label" htmlFor="timeZone" style={{ display: 'block', marginBottom: '8px' }}>Time Zone <span style={{ color: 'var(--error)' }}>*</span></label>
-          <div className="form-input-wrapper">
-            <Globe className="input-icon-start" size={18} />
-            <select
-              id="timeZone"
-              className="form-input"
-              value={timeZone}
-              onChange={(e) => setTimeZone(e.target.value)}
-              disabled={loading}
-              style={{
-                appearance: 'none',
-                WebkitAppearance: 'none',
-                MozAppearance: 'none',
-                cursor: 'pointer',
-                paddingRight: '40px'
-              }}
-            >
-              {TIMEZONES.map((tz) => (
-                <option key={tz} value={tz} style={{ background: '#030014', color: 'var(--text-primary)' }}>
-                  {tz}
-                </option>
-              ))}
-            </select>
+      ) : isVerifying ? (
+        <div>
+          {verifyTokenFromServer && (
             <div style={{
-              position: 'absolute',
-              right: '18px',
-              pointerEvents: 'none',
-              borderTop: '5px solid var(--text-secondary)',
-              borderLeft: '5px solid transparent',
-              borderRight: '5px solid transparent',
-            }} />
-          </div>
-        </div>
-
-        <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: '8px' }}>
-          {loading ? (
-            <span className="spinner" />
-          ) : (
-            'Register Account'
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              padding: '16px',
+              borderRadius: '12px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px'
+            }}>
+              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Verification Token
+                </p>
+                <code style={{ fontSize: '14px', color: 'var(--primary-400)', fontFamily: 'monospace', fontWeight: 600 }}>
+                  {verifyTokenFromServer}
+                </code>
+              </div>
+              <button
+                type="button"
+                onClick={copyToClipboard}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: 'var(--text-secondary)',
+                  borderRadius: '8px',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  transition: 'var(--transition-fast)'
+                }}
+                title="Copy token"
+              >
+                {copied ? <Check size={16} style={{ color: '#10b981' }} /> : <Copy size={16} />}
+              </button>
+            </div>
           )}
-        </button>
-      </form>
 
-      <div className="footer-text">
-        Already have an account?{' '}
-        <a href="#login" className="link" onClick={(e) => { e.preventDefault(); onNavigateToLogin(); }}>
-          Sign in
-        </a>
-      </div>
+          <form onSubmit={handleVerifySubmit} noValidate>
+            <div className="form-group">
+              <label className="form-label" htmlFor="verifyToken" style={{ display: 'block', marginBottom: '8px' }}>
+                Verification Token <span style={{ color: 'var(--error)' }}>*</span>
+              </label>
+              <div className="form-input-wrapper">
+                <Mail className="input-icon-start" size={18} />
+                <input
+                  id="verifyToken"
+                  type="text"
+                  placeholder="Enter your verification token"
+                  className="form-input"
+                  value={verifyToken}
+                  onChange={(e) => setVerifyToken(e.target.value)}
+                  disabled={verificationLoading}
+                  style={{ paddingLeft: '44px', paddingRight: '16px' }}
+                />
+              </div>
+            </div>
+
+            <button type="submit" className="btn-primary" disabled={verificationLoading} style={{ marginTop: '24px', width: '100%' }}>
+              {verificationLoading ? <span className="spinner" /> : 'Verify Email'}
+            </button>
+          </form>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} noValidate>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="firstName" style={{ display: 'block', marginBottom: '8px' }}>First Name <span style={{ color: 'var(--error)' }}>*</span></label>
+              <div className="form-input-wrapper">
+                <User className="input-icon-start" size={18} />
+                <input
+                  id="firstName"
+                  type="text"
+                  placeholder="first name"
+                  className="form-input"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  disabled={loading}
+                  style={{ paddingLeft: '44px', paddingRight: '16px' }}
+                />
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="lastName" style={{ display: 'block', marginBottom: '8px' }}>Last Name <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>(Optional)</span></label>
+              <div className="form-input-wrapper">
+                <User className="input-icon-start" size={18} />
+                <input
+                  id="lastName"
+                  type="text"
+                  placeholder="last name"
+                  className="form-input"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  disabled={loading}
+                  style={{ paddingLeft: '44px', paddingRight: '16px' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="email" style={{ display: 'block', marginBottom: '8px' }}>Email Address <span style={{ color: 'var(--error)' }}>*</span></label>
+            <div className="form-input-wrapper">
+              <Mail className="input-icon-start" size={18} />
+              <input
+                id="email"
+                type="email"
+                placeholder="email"
+                className="form-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                autoComplete="email"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="password" style={{ display: 'block', marginBottom: '8px' }}>Password <span style={{ color: 'var(--error)' }}>*</span></label>
+            <div className="form-input-wrapper">
+              <Lock className="input-icon-start" size={18} />
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="password"
+                className="form-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                className="input-icon-end"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                disabled={loading}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="phone" style={{ display: 'block', marginBottom: '8px' }}>Phone Number <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>(Optional)</span></label>
+            <div className="form-input-wrapper">
+              <Phone className="input-icon-start" size={18} />
+              <input
+                id="phone"
+                type="tel"
+                placeholder="phone"
+                className="form-input"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="timeZone" style={{ display: 'block', marginBottom: '8px' }}>Time Zone <span style={{ color: 'var(--error)' }}>*</span></label>
+            <div className="form-input-wrapper">
+              <Globe className="input-icon-start" size={18} />
+              <select
+                id="timeZone"
+                className="form-input"
+                value={timeZone}
+                onChange={(e) => setTimeZone(e.target.value)}
+                disabled={loading}
+                style={{
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                  MozAppearance: 'none',
+                  cursor: 'pointer',
+                  paddingRight: '40px'
+                }}
+              >
+                {TIMEZONES.map((tz) => (
+                  <option key={tz} value={tz} style={{ background: '#030014', color: 'var(--text-primary)' }}>
+                    {tz}
+                  </option>
+                ))}
+              </select>
+              <div style={{
+                position: 'absolute',
+                right: '18px',
+                pointerEvents: 'none',
+                borderTop: '5px solid var(--text-secondary)',
+                borderLeft: '5px solid transparent',
+                borderRight: '5px solid transparent',
+              }} />
+            </div>
+          </div>
+
+          <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: '8px' }}>
+            {loading ? (
+              <span className="spinner" />
+            ) : (
+              'Register Account'
+            )}
+          </button>
+        </form>
+      )}
+
+      {!isVerifying && (
+        <div className="footer-text">
+          Already have an account?{' '}
+          <a href="#login" className="link" onClick={(e) => { e.preventDefault(); onNavigateToLogin(); }}>
+            Sign in
+          </a>
+        </div>
+      )}
     </div>
   );
 };

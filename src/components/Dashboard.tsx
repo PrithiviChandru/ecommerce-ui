@@ -1,155 +1,108 @@
-import React, { useState, useMemo } from 'react';
-import { Search, ShoppingCart, LogOut, Star, Tag, ShieldCheck, Check, ShoppingBag, X } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Search, ShoppingCart, LogOut, Tag, Check, ShoppingBag, X } from 'lucide-react';
+import { Profile } from './Profile';
+import { api } from '../services/api';
 
-interface Product {
+// interface Product {
+//   id: number;
+//   title: string;
+//   category: string;
+//   price: number;
+//   originalPrice: number;
+//   rating: number;
+//   reviewsCount: number;
+//   image: string;
+//   badge?: string;
+//   description: string;
+//   isAssured?: boolean;
+// }
+interface Product{
   id: number;
-  title: string;
-  category: string;
-  price: number;
-  originalPrice: number;
-  rating: number;
-  reviewsCount: number;
-  image: string;
-  badge?: string;
+  name: string;
   description: string;
-  isAssured?: boolean;
+  categoryId: number;
+  categoryName:string;
+  price: number;
+  stock: number;
+  image?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface DashboardProps {
   userEmail: string;
+  token: string;
   onLogout: () => void;
 }
 
-const PRODUCTS_MOCK: Product[] = [
-  {
-    id: 1,
-    title: "Apex Wireless Noise-Cancelling Headphones",
-    category: "Tech",
-    price: 299,
-    originalPrice: 399,
-    rating: 4.8,
-    reviewsCount: 824,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80",
-    badge: "Best Seller",
-    description: "Experience premium sound with industry-leading hybrid active noise cancelling technology.",
-    isAssured: true
-  },
-  {
-    id: 2,
-    title: "Titan Smartwatch Series 5",
-    category: "Tech",
-    price: 199,
-    originalPrice: 249,
-    rating: 4.7,
-    reviewsCount: 1150,
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80",
-    badge: "20% OFF",
-    description: "Track your health, receive notifications, and enjoy a gorgeous 1.9-inch AMOLED display.",
-    isAssured: true
-  },
-  {
-    id: 3,
-    title: "AeroGrip Mechanical Gaming Keyboard",
-    category: "Tech",
-    price: 129,
-    originalPrice: 159,
-    rating: 4.9,
-    reviewsCount: 340,
-    image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=80",
-    description: "Ultra-responsive brown switches with fully customizable dynamic RGB backlighting.",
-    isAssured: false
-  },
-  {
-    id: 4,
-    title: "Nomad Full-Grain Leather Travel Duffle",
-    category: "Accessories",
-    price: 89,
-    originalPrice: 120,
-    rating: 4.6,
-    reviewsCount: 120,
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&auto=format&fit=crop&q=80",
-    badge: "Hot Deal",
-    description: "Handcrafted travel duffle bag designed with durable waterproof zippers and dedicated shoe pocket.",
-    isAssured: true
-  },
-  {
-    id: 5,
-    title: "Vanguard Minimalist Carbon Fiber Wallet",
-    category: "Accessories",
-    price: 45,
-    originalPrice: 60,
-    rating: 4.5,
-    reviewsCount: 450,
-    image: "https://images.unsplash.com/photo-1627124765135-566b50ad24ab?w=500&auto=format&fit=crop&q=80",
-    description: "RFID-blocking slim cardholder that holds up to 12 cards without stretching out.",
-    isAssured: false
-  },
-  {
-    id: 6,
-    title: "OmniFit Ergonomic Breathable Office Chair",
-    category: "Home",
-    price: 349,
-    originalPrice: 499,
-    rating: 4.8,
-    reviewsCount: 98,
-    image: "https://images.unsplash.com/photo-1505797149-43b0069ec26b?w=500&auto=format&fit=crop&q=80",
-    badge: "Top Rated",
-    description: "Complete adjustable lumbo-sacral support system with high-density mesh and reclining locks.",
-    isAssured: true
-  },
-  {
-    id: 7,
-    title: "Prime Cotton Oversized Fit Tee",
-    category: "Apparel",
-    price: 28,
-    originalPrice: 35,
-    rating: 4.4,
-    reviewsCount: 1230,
-    image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=80",
-    description: "Super soft 240GSM heavyweight cotton fabric with dropping shoulder silhouette.",
-    isAssured: false
-  },
-  {
-    id: 8,
-    title: "Aura Ceramic Essential Oil Diffuser",
-    category: "Home",
-    price: 38,
-    originalPrice: 48,
-    rating: 4.7,
-    reviewsCount: 610,
-    image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=500&auto=format&fit=crop&q=80",
-    description: "Minimalist ceramic ultrasonic diffuser with ambient warm-light glow modes.",
-    isAssured: true
-  }
-];
-
-export const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout }) => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState<{ [productId: number]: number }>({});
   const [showCartToast, setShowCartToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [currentTab, setCurrentTab] = useState<'products' | 'profile'>('products');
 
-  const categories = useMemo(() => {
-    return ['All', ...Array.from(new Set(PRODUCTS_MOCK.map((p) => p.category)))];
-  }, []);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [prodResponse, catResponse] = await Promise.all([
+          api.getProducts(token, 0, 50, 'id', 'asc'),
+          api.getCategories(token, 0, 5, 'id', 'asc')
+        ]);
+        
+        const fetchedProducts = prodResponse?.data?.content || [];
+        const fetchedCategories = catResponse?.data?.content || [];
+        
+        setProducts(fetchedProducts);
+        setCategories(fetchedCategories);
+        setError(null);
+      } catch (err: any) {
+        console.error('Failed to fetch dashboard data:', err);
+        setError(err.message || 'Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (token) {
+      fetchData();
+    }
+  }, [token]);
+
+  const categoryNames = useMemo(() => {
+    return ['All', ...categories.map((c) => c.name)];
+  }, [categories]);
 
   const filteredProducts = useMemo(() => {
-    return PRODUCTS_MOCK.filter((product) => {
-      const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-      const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    return products.filter((product) => {
+      const matchesCategory = selectedCategory === 'All' || product.categoryName === selectedCategory;
+      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            product.category.toLowerCase().includes(searchQuery.toLowerCase());
+                            (product.categoryName || '').toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [products, searchQuery, selectedCategory]);
 
   const handleAddToCart = (product: Product) => {
     setCart((prevCart) => ({
       ...prevCart,
       [product.id]: (prevCart[product.id] || 0) + 1
     }));
-    setToastMessage(`Added "${product.title}" to cart!`);
+    setToastMessage(`Added "${product.name}" to cart!`);
     setShowCartToast(true);
     setTimeout(() => {
       setShowCartToast(false);
@@ -289,6 +242,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => 
             </span>
           </div>
 
+          {/* Profile Navigation Button */}
+          <button
+            onClick={() => setCurrentTab(currentTab === 'products' ? 'profile' : 'products')}
+            style={{
+              background: currentTab === 'profile' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid var(--border-card)',
+              borderRadius: '30px',
+              padding: '8px 16px',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              transition: 'var(--transition-fast)'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = currentTab === 'profile' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = currentTab === 'profile' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+            }}
+          >
+            {currentTab === 'profile' ? 'Shop' : 'Profile'}
+          </button>
+
           {/* Cart Icon */}
           <div style={{ position: 'relative', cursor: 'pointer', padding: '6px' }}>
             <ShoppingCart size={22} style={{ color: 'var(--text-primary)', opacity: 0.9 }} />
@@ -347,302 +324,315 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, onLogout }) => 
 
       {/* Main Content Area */}
       <div>
-        {/* Category Selection Filter Bar */}
-        <div style={{
-          display: 'flex',
-          gap: '10px',
-          overflowX: 'auto',
-          paddingBottom: '8px',
-          marginBottom: '32px',
-          scrollbarWidth: 'none'
-        }}>
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              style={{
-                background: selectedCategory === category ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid',
-                borderColor: selectedCategory === category ? 'var(--primary-500)' : 'var(--border-card)',
-                color: selectedCategory === category ? 'white' : 'var(--text-secondary)',
-                padding: '10px 20px',
-                borderRadius: '30px',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'var(--transition-fast)',
-                boxShadow: selectedCategory === category ? '0 4px 12px rgba(124, 58, 237, 0.25)' : 'none'
-              }}
-              onMouseOver={(e) => {
-                if (selectedCategory !== category) {
-                  e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                }
-              }}
-              onMouseOut={(e) => {
-                if (selectedCategory !== category) {
-                  e.currentTarget.style.borderColor = 'var(--border-card)';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                }
-              }}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-
-        {/* Results Info */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-          color: 'var(--text-secondary)'
-        }}>
-          <p style={{ fontSize: '14px' }}>
-            Showing <strong>{filteredProducts.length}</strong> products
-            {selectedCategory !== 'All' && <span> in <strong style={{ color: 'var(--primary-300)' }}>{selectedCategory}</strong></span>}
-            {searchQuery && <span> matching "<strong style={{ color: 'var(--primary-300)' }}>{searchQuery}</strong>"</span>}
-          </p>
-        </div>
-
-        {/* Product Grid (Amazon / Flipkart Style) */}
-        {filteredProducts.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '64px 24px',
-            background: 'rgba(255, 255, 255, 0.01)',
-            border: '1px dashed var(--border-card)',
-            borderRadius: '24px'
-          }}>
-            <ShoppingBag size={48} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
-            <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>No products found</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '14px', maxWidth: '360px', margin: '0 auto' }}>
-              We couldn't find any products matching your search criteria. Try adjusting your query or filters.
-            </p>
-            <button
-              onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }}
-              style={{
-                marginTop: '16px',
-                background: 'none',
-                border: '1px solid var(--primary-500)',
-                color: 'var(--primary-300)',
-                padding: '8px 18px',
-                borderRadius: '20px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 500,
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)'}
-              onMouseOut={(e) => e.currentTarget.style.background = 'none'}
-            >
-              Clear Filters
-            </button>
-          </div>
+        {currentTab === 'profile' ? (
+          <Profile token={token} onBack={() => setCurrentTab('products')} />
         ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            gap: '24px'
-          }}>
-            {filteredProducts.map((product) => {
-              const discountPercentage = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
-              
-              return (
-                <div
-                  key={product.id}
-                  style={{
-                    background: 'rgba(15, 12, 30, 0.4)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid var(--border-card)',
-                    borderRadius: '20px',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s, box-shadow 0.3s',
-                    position: 'relative',
-                    cursor: 'pointer'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-6px)';
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.25)';
-                    e.currentTarget.style.boxShadow = '0 12px 24px rgba(139, 92, 246, 0.1)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.borderColor = 'var(--border-card)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  {/* Badge Tag */}
-                  {product.badge && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '12px',
-                      left: '12px',
-                      zIndex: 10,
-                      background: product.badge.includes('OFF') ? '#ef4444' : 'var(--primary-600)',
-                      color: 'white',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      padding: '4px 10px',
-                      borderRadius: '20px',
-                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.15)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}>
-                      <Tag size={10} />
-                      <span>{product.badge}</span>
-                    </div>
-                  )}
-
-                  {/* Product Image Container */}
-                  <div style={{
-                    width: '100%',
-                    height: '200px',
-                    overflow: 'hidden',
-                    position: 'relative',
-                    background: 'rgba(0,0,0,0.2)'
-                  }}>
-                    <img
-                      src={product.image}
-                      alt={product.title}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        transition: 'transform 0.5s ease'
-                      }}
-                      onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
-                      onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                    />
-                  </div>
-
-                  {/* Content Container */}
-                  <div style={{
-                    padding: '20px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    flex: '1'
-                  }}>
-                    {/* Category */}
-                    <span style={{
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                      color: 'var(--primary-400)',
-                      letterSpacing: '0.05em',
-                      marginBottom: '8px'
-                    }}>
-                      {product.category}
-                    </span>
-
-                    {/* Title */}
-                    <h4 style={{
-                      fontSize: '16px',
-                      fontWeight: 600,
-                      lineHeight: '1.4',
-                      color: 'var(--text-primary)',
-                      marginBottom: '8px',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      height: '44px'
-                    }}>
-                      {product.title}
-                    </h4>
-
-                    {/* Star Rating */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', color: '#f59e0b' }}>
-                        <Star size={14} fill="#f59e0b" />
-                        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginLeft: '4px' }}>
-                          {product.rating}
-                        </span>
-                      </div>
-                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                        ({product.reviewsCount.toLocaleString()})
-                      </span>
-
-                      {product.isAssured && (
-                        <div style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '2px',
-                          background: 'rgba(59, 130, 246, 0.1)',
-                          border: '1px solid rgba(59, 130, 246, 0.2)',
-                          borderRadius: '4px',
-                          padding: '1px 4px',
-                          marginLeft: 'auto'
-                        }}>
-                          <ShieldCheck size={11} style={{ color: '#3b82f6' }} />
-                          <span style={{ fontSize: '9px', fontWeight: 700, color: '#60a5fa' }}>ASSURED</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Description */}
-                    <p style={{
-                      fontSize: '12px',
-                      color: 'var(--text-secondary)',
-                      lineHeight: '1.5',
-                      marginBottom: '16px',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      height: '36px'
-                    }}>
-                      {product.description}
-                    </p>
-
-                    {/* Price Block */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      gap: '8px',
-                      marginTop: 'auto',
-                      marginBottom: '16px'
-                    }}>
-                      <span style={{ fontSize: '20px', fontWeight: 700, color: 'white' }}>
-                        ${product.price}
-                      </span>
-                      <span style={{ fontSize: '13px', textDecoration: 'line-through', color: 'var(--text-muted)' }}>
-                        ${product.originalPrice}
-                      </span>
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#10b981' }}>
-                        ({discountPercentage}% off)
-                      </span>
-                    </div>
-
-                    {/* Add to Cart CTA */}
+          <>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '64px 24px' }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  border: '3px solid rgba(139, 92, 246, 0.1)',
+                  borderTop: '3px solid var(--primary-500)',
+                  borderRadius: '50%',
+                  margin: '0 auto 16px',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>Loading products from server...</p>
+              </div>
+            ) : error ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '48px 24px',
+                background: 'rgba(239, 68, 68, 0.05)',
+                border: '1px solid rgba(239, 68, 68, 0.15)',
+                borderRadius: '16px',
+                maxWidth: '480px',
+                margin: '32px auto 0'
+              }}>
+                <X size={40} style={{ color: '#ef4444', marginBottom: '16px' }} />
+                <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px', color: '#f87171' }}>Failed to Load Products</h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>{error}</p>
+              </div>
+            ) : (
+              <>
+                {/* Category Selection Filter Bar */}
+                <div style={{
+                  display: 'flex',
+                  gap: '10px',
+                  overflowX: 'auto',
+                  paddingBottom: '8px',
+                  marginBottom: '32px',
+                  scrollbarWidth: 'none'
+                }}>
+                  {categoryNames.map((category) => (
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(product);
-                      }}
-                      className="btn-primary"
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
                       style={{
-                        padding: '10px 14px',
-                        fontSize: '13px',
-                        borderRadius: '8px',
-                        gap: '6px',
-                        background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)',
-                        boxShadow: '0 4px 8px rgba(124, 58, 237, 0.15)'
+                        background: selectedCategory === category ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.02)',
+                        border: '1px solid',
+                        borderColor: selectedCategory === category ? 'var(--primary-500)' : 'var(--border-card)',
+                        color: selectedCategory === category ? 'white' : 'var(--text-secondary)',
+                        padding: '10px 20px',
+                        borderRadius: '30px',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'var(--transition-fast)',
+                        boxShadow: selectedCategory === category ? '0 4px 12px rgba(124, 58, 237, 0.25)' : 'none'
+                      }}
+                      onMouseOver={(e) => {
+                        if (selectedCategory !== category) {
+                          e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (selectedCategory !== category) {
+                          e.currentTarget.style.borderColor = 'var(--border-card)';
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                        }
                       }}
                     >
-                      <ShoppingCart size={14} />
-                      <span>Add to Cart</span>
+                      {category}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Results Info */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '20px',
+                  color: 'var(--text-secondary)'
+                }}>
+                  <p style={{ fontSize: '14px' }}>
+                    Showing <strong>{filteredProducts.length}</strong> products
+                    {selectedCategory !== 'All' && <span> in <strong style={{ color: 'var(--primary-300)' }}>{selectedCategory}</strong></span>}
+                    {searchQuery && <span> matching "<strong style={{ color: 'var(--primary-300)' }}>{searchQuery}</strong>"</span>}
+                  </p>
+                </div>
+
+                {/* Product Grid (Amazon / Flipkart Style) */}
+                {filteredProducts.length === 0 ? (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '64px 24px',
+                    background: 'rgba(255, 255, 255, 0.01)',
+                    border: '1px dashed var(--border-card)',
+                    borderRadius: '24px'
+                  }}>
+                    <ShoppingBag size={48} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
+                    <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>No products found</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', maxWidth: '360px', margin: '0 auto' }}>
+                      We couldn't find any products matching your search criteria. Try adjusting your query or filters.
+                    </p>
+                    <button
+                      onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }}
+                      style={{
+                        marginTop: '16px',
+                        background: 'none',
+                        border: '1px solid var(--primary-500)',
+                        color: 'var(--primary-300)',
+                        padding: '8px 18px',
+                        borderRadius: '20px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        transition: 'var(--transition-fast)'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      Clear Filters
                     </button>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                ) : (
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                    gap: '24px'
+                  }}>
+                    {filteredProducts.map((product) => {
+                      const badge = product.stock <= 3 ? "Low Stock" : undefined;
+
+                      return (
+                        <div
+                          key={product.id}
+                          style={{
+                            background: 'rgba(15, 12, 30, 0.4)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid var(--border-card)',
+                            borderRadius: '20px',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s, box-shadow 0.3s',
+                            position: 'relative',
+                            cursor: 'pointer'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-6px)';
+                            e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.25)';
+                            e.currentTarget.style.boxShadow = '0 12px 24px rgba(139, 92, 246, 0.1)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.transform = 'none';
+                            e.currentTarget.style.borderColor = 'var(--border-card)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                        >
+                          {/* Badge Tag (for Low Stock) */}
+                          {badge && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '12px',
+                              left: '12px',
+                              zIndex: 10,
+                              background: '#ef4444',
+                              color: 'white',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              padding: '4px 10px',
+                              borderRadius: '20px',
+                              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.15)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              <Tag size={10} />
+                              <span>{badge}</span>
+                            </div>
+                          )}
+
+                          {/* Product Image Container */}
+                          <div style={{
+                            width: '100%',
+                            height: '180px',
+                            overflow: 'hidden',
+                            position: 'relative',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderBottom: '1px solid var(--border-card)'
+                          }}>
+                            {product.image ? (
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  transition: 'transform 0.5s ease'
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
+                                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                              />
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
+                                <ShoppingBag size={32} />
+                                <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>No Image Available</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Content Container */}
+                          <div style={{
+                            padding: '24px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            flex: '1',
+                            gap: '12px'
+                          }}>
+                            {/* Category */}
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              textTransform: 'uppercase',
+                              color: 'var(--primary-400)',
+                              letterSpacing: '0.05em'
+                            }}>
+                              {product.categoryName}
+                            </span>
+
+                            {/* Title */}
+                            <h4 style={{
+                              fontSize: '18px',
+                              fontWeight: 600,
+                              lineHeight: '1.4',
+                              color: 'var(--text-primary)',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              margin: 0
+                            }}>
+                              {product.name}
+                            </h4>
+
+                            {/* Description */}
+                            <p style={{
+                              fontSize: '13px',
+                              color: 'var(--text-secondary)',
+                              lineHeight: '1.5',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              margin: 0
+                            }}>
+                              {product.description}
+                            </p>
+
+                            {/* Price Block */}
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              marginTop: '8px'
+                            }}>
+                              <span style={{ fontSize: '22px', fontWeight: 700, color: 'white' }}>
+                                ₹{product.price}
+                              </span>
+                              <span style={{ fontSize: '12px', color: product.stock > 0 ? '#10b981' : '#ef4444', fontWeight: 600 }}>
+                                {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+                              </span>
+                            </div>
+
+                            {/* Add to Cart CTA */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddToCart(product);
+                              }}
+                              className="btn-primary"
+                              style={{
+                                padding: '10px 14px',
+                                fontSize: '13px',
+                                borderRadius: '8px',
+                                gap: '6px',
+                                background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)',
+                                boxShadow: '0 4px 8px rgba(124, 58, 237, 0.15)'
+                              }}
+                            >
+                              <ShoppingCart size={14} />
+                              <span>Add to Cart</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </>
         )}
       </div>
     </div>
