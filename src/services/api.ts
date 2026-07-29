@@ -1,6 +1,6 @@
 // E-commerce API Client Configuration
-// const API_BASE_URL = 'https://authservice-1-p945.onrender.com/api';
-const API_BASE_URL = 'http://localhost:8081/api';
+const API_BASE_URL = 'https://authservice-84yz.onrender.com/api';
+// const API_BASE_URL = 'http://localhost:8081/api';
 
 export interface User {
   id: string;
