@@ -1,6 +1,6 @@
 // E-commerce API Client Configuration
-const API_BASE_URL = 'https://authservice-84yz.onrender.com/api';
-// const API_BASE_URL = 'http://localhost:8081/api';
+// const API_BASE_URL = 'https://authservice-84yz.onrender.com/api';
+const API_BASE_URL = 'http://localhost:8081/api';
 
 export interface User {
   id: string;
@@ -79,6 +79,46 @@ export interface ProfileResponse {
   timeStamp: string;
 }
 
+export interface UserListItem {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  phone: string | null;
+  timeZone: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UsersResponse {
+  apiStatus: boolean;
+  message: string;
+  data: UserListItem[];
+  errors: any;
+  timeStamp: string;
+}
+
+export interface SingleUserResponse {
+  apiStatus: boolean;
+  message: string;
+  data: UserListItem;
+  errors: any;
+  timeStamp: string;
+}
+
+export interface DeleteUserResponse {
+  apiStatus: boolean;
+  message: string;
+  data: {
+    success: boolean;
+    userId: number;
+    message: string;
+  };
+  errors: any;
+  timeStamp: string;
+}
+
 export const api = {
   /**
    * Log in user
@@ -144,6 +184,56 @@ export const api = {
   },
 
   /**
+   * Fetch users list
+   */
+  async getUsers(token: string): Promise<UsersResponse> {
+    const response = await fetch(`${API_BASE_URL}/users`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return await handleResponse<UsersResponse>(response);
+  },
+
+  /**
+   * Fetch individual user by ID
+   */
+  async getUserById(token: string, id: number): Promise<SingleUserResponse> {
+    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return await handleResponse<SingleUserResponse>(response);
+  },
+
+  /**
+   * Delete individual user by ID
+   */
+  async deleteUser(token: string, id: number): Promise<DeleteUserResponse> {
+    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return await handleResponse<DeleteUserResponse>(response);
+  },
+
+  /**
+   * Ping root path to wake up Render instance (in case it is sleeping)
+   */
+  async wakeUp(): Promise<void> {
+    const rootUrl = API_BASE_URL.replace('/api', '');
+    await fetch(`${rootUrl}/swagger-ui/index.html`, { mode: 'no-cors' });
+  },
+
+  /**
    * Update User Profile details
    */
   async updateProfile(token: string, payload: {
@@ -183,6 +273,50 @@ export const api = {
   async getCategories(token: string, page = 0, size = 50, sortBy = 'id', sortDir = 'asc'): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/Categories?page=${page}&size=${size}&sortBy=${sortBy}&sortDIr=${sortDir}`, {
       method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return await handleResponse<any>(response);
+  },
+
+  /**
+   * Create a new category
+   */
+  async createCategory(token: string, payload: { name: string; description: string }): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/Categories`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    return await handleResponse<any>(response);
+  },
+
+  /**
+   * Update an existing category
+   */
+  async updateCategory(token: string, id: number, payload: { name: string; description: string }): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/Categories/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    return await handleResponse<any>(response);
+  },
+
+  /**
+   * Delete an existing category
+   */
+  async deleteCategory(token: string, id: number): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/Categories/${id}`, {
+      method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`

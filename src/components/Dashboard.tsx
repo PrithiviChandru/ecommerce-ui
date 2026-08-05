@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ShoppingCart, LogOut, Tag, Check, ShoppingBag, X } from 'lucide-react';
+import { Search, ShoppingCart, LogOut, Tag, Check, ShoppingBag, X, Users } from 'lucide-react';
 import { Profile } from './Profile';
+import { UsersList } from './UsersList';
+import { CategoriesList } from './CategoriesList';
 import { api } from '../services/api';
 
 // interface Product {
@@ -53,7 +55,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
   const [cart, setCart] = useState<{ [productId: number]: number }>({});
   const [showCartToast, setShowCartToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [currentTab, setCurrentTab] = useState<'products' | 'profile'>('products');
+  const [currentTab, setCurrentTab] = useState<'products' | 'profile' | 'users' | 'categories'>('products');
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const response = await api.getProfile(token);
+        if (response.apiStatus) {
+          setUserRole(response.data.role);
+        }
+      } catch (err) {
+        console.error('Failed to fetch user role for admin access:', err);
+      }
+    };
+    if (token) {
+      fetchUserRole();
+    }
+  }, [token]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -242,9 +261,95 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
             </span>
           </div>
 
+          {/* Shop Navigation Button */}
+          {currentTab !== 'products' && (
+            <button
+              onClick={() => setCurrentTab('products')}
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-card)',
+                borderRadius: '30px',
+                padding: '8px 16px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+              }}
+            >
+              Shop
+            </button>
+          )}
+
+          {/* Users Navigation Button (Admin Only) */}
+          {userRole === 'ADMIN' && (
+            <button
+              onClick={() => setCurrentTab('users')}
+              style={{
+                background: currentTab === 'users' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-card)',
+                borderRadius: '30px',
+                padding: '8px 16px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = currentTab === 'users' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = currentTab === 'users' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+              }}
+            >
+              <Users size={14} />
+              <span>Users</span>
+            </button>
+          )}
+
+          {/* Categories Navigation Button (Admin Only) */}
+          {userRole === 'ADMIN' && (
+            <button
+              onClick={() => setCurrentTab('categories')}
+              style={{
+                background: currentTab === 'categories' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-card)',
+                borderRadius: '30px',
+                padding: '8px 16px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = currentTab === 'categories' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = currentTab === 'categories' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+              }}
+            >
+              <Tag size={14} />
+              <span>Categories</span>
+            </button>
+          )}
+
           {/* Profile Navigation Button */}
           <button
-            onClick={() => setCurrentTab(currentTab === 'products' ? 'profile' : 'products')}
+            onClick={() => setCurrentTab('profile')}
             style={{
               background: currentTab === 'profile' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
               border: '1px solid var(--border-card)',
@@ -263,7 +368,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
               e.currentTarget.style.background = currentTab === 'profile' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
             }}
           >
-            {currentTab === 'profile' ? 'Shop' : 'Profile'}
+            Profile
           </button>
 
           {/* Cart Icon */}
@@ -326,6 +431,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
       <div>
         {currentTab === 'profile' ? (
           <Profile token={token} onBack={() => setCurrentTab('products')} />
+        ) : currentTab === 'users' ? (
+          <UsersList token={token} onBack={() => setCurrentTab('products')} />
+        ) : currentTab === 'categories' ? (
+          <CategoriesList token={token} onBack={() => setCurrentTab('products')} />
         ) : (
           <>
             {loading ? (

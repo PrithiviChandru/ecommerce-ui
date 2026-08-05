@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowRight } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -15,6 +15,37 @@ export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onNavigateTo
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isWaking, setIsWaking] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const wakeUpServer = async () => {
+      const timeoutId = setTimeout(() => {
+        if (active) {
+          setIsWaking(true);
+        }
+      }, 1200);
+
+      try {
+        await api.wakeUp();
+        clearTimeout(timeoutId);
+        if (active) {
+          setIsWaking(false);
+        }
+      } catch (err) {
+        console.warn('Wake up ping finished:', err);
+        clearTimeout(timeoutId);
+        if (active) {
+          setIsWaking(false);
+        }
+      }
+    };
+
+    wakeUpServer();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Simple client-side validation
   const validateForm = (): boolean => {
@@ -96,6 +127,47 @@ export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onNavigateTo
           <span>{error}</span>
         </div>
       )}
+
+      {/* Render Tier Warning Note */}
+      <div style={{
+        background: 'rgba(245, 158, 11, 0.06)',
+        border: '1px solid rgba(245, 158, 11, 0.15)',
+        borderRadius: '12px',
+        padding: '12px 16px',
+        marginBottom: '20px',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '10px'
+      }}>
+        <AlertCircle size={18} style={{ color: '#fbbf24', flexShrink: 0, marginTop: '2px' }} />
+        <div style={{ fontSize: '12px', color: '#f59e0b', lineHeight: '1.5', width: '100%' }}>
+          <strong style={{ display: 'block', marginBottom: '2px', color: '#fbbf24' }}>System Notice</strong>
+          <span>The backend API is hosted on a free instance. If it was idle, it may take <strong>10 to 15 minutes</strong> to spin up and respond. Thank you for your patience!</span>
+          {isWaking && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginTop: '10px',
+              background: 'rgba(245, 158, 11, 0.1)',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              border: '1px dashed rgba(245, 158, 11, 0.3)',
+              width: 'fit-content'
+            }}>
+              <div style={{
+                width: '12px',
+                height: '12px',
+                border: '2px solid rgba(251, 191, 36, 0.2)',
+                borderTop: '2px solid #fbbf24',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite'
+              }} />
+              <span style={{ fontWeight: 600, color: '#fbbf24', fontSize: '11px' }}>Waking up backend server...</span>
+            </div>
+          )}
+        </div>
+      </div>
 
 
       <form onSubmit={handleSubmit} noValidate>
