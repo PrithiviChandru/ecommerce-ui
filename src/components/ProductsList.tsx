@@ -1,170 +1,226 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Tag, Search, FolderOpen, RefreshCw, AlertCircle, X, Plus, Edit2, Trash2 } from 'lucide-react';
+import { ShoppingBag, Plus, Search, RefreshCw, AlertCircle, X, Tag, IndianRupee, Archive, Edit2, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
 
-interface Category {
+interface Product {
   id: number;
   name: string;
   description: string;
+  categoryId: number;
+  categoryName: string;
+  price: number;
+  stock: number;
   createdAt: string;
   updatedAt: string;
 }
 
-interface CategoriesListProps {
+interface CategoryOption {
+  id: number;
+  name: string;
+}
+
+interface ProductsListProps {
   token: string;
   onBack: () => void;
 }
 
-export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack }) => {
-  const [categories, setCategories] = useState<Category[]>([]);
+export const ProductsList: React.FC<ProductsListProps> = ({ token, onBack }) => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Pagination states matching backend response
+  // Pagination states
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
 
-  // Create Category States
+  // Creation modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createName, setCreateName] = useState('');
   const [createDescription, setCreateDescription] = useState('');
+  const [createCategoryId, setCreateCategoryId] = useState<number | ''>('');
+  const [createPrice, setCreatePrice] = useState<number | ''>('');
+  const [createStock, setCreateStock] = useState<number | ''>('');
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  const handleCreateCategory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!createName.trim()) {
-      setCreateError('Category name is required.');
-      return;
-    }
-    try {
-      setCreateLoading(true);
-      setCreateError(null);
-      await api.createCategory(token, {
-        name: createName.trim(),
-        description: createDescription.trim()
-      });
-      setCreateName('');
-      setCreateDescription('');
-      setCreateError(null);
-      setShowCreateModal(false);
-      fetchCategories();
-    } catch (err: any) {
-      console.error('Create category error:', err);
-      setCreateError(err.message || 'Failed to create category.');
-    } finally {
-      setCreateLoading(false);
-    }
-  };
-
-  // Edit Category States
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  // Edit modal states
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [editCategoryId, setEditCategoryId] = useState<number | ''>('');
+  const [editPrice, setEditPrice] = useState<number | ''>('');
+  const [editStock, setEditStock] = useState<number | ''>('');
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
-  const startEditCategory = (id: number) => {
-    // Retrieve by ID from list data
-    const categoryToEdit = categories.find((c) => c.id === id);
-    if (categoryToEdit) {
-      setEditingCategory(categoryToEdit);
-      setEditName(categoryToEdit.name);
-      setEditDescription(categoryToEdit.description);
-      setEditError(null);
-    }
-  };
-
-  const handleUpdateCategory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingCategory) return;
-    if (!editName.trim()) {
-      setEditError('Category name is required.');
-      return;
-    }
-    try {
-      setEditLoading(true);
-      setEditError(null);
-      await api.updateCategory(token, editingCategory.id, {
-        name: editName.trim(),
-        description: editDescription.trim()
-      });
-      setEditingCategory(null);
-      setEditName('');
-      setEditDescription('');
-      setEditError(null);
-      fetchCategories();
-    } catch (err: any) {
-      console.error('Update category error:', err);
-      setEditError(err.message || 'Failed to update category.');
-    } finally {
-      setEditLoading(false);
-    }
-  };
-
-  // Delete Category States
-  const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
+  // Delete modal/action states
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const startDeleteCategory = (id: number) => {
-    const categoryToDelete = categories.find((c) => c.id === id);
-    if (categoryToDelete) {
-      setDeletingCategory(categoryToDelete);
-      setDeleteError(null);
-    }
-  };
-
-  const handleDeleteCategory = async () => {
-    if (!deletingCategory) return;
-    try {
-      setDeleteLoading(true);
-      setDeleteError(null);
-      await api.deleteCategory(token, deletingCategory.id);
-      setDeletingCategory(null);
-      setDeleteError(null);
-      fetchCategories();
-    } catch (err: any) {
-      console.error('Delete category error:', err);
-      setDeleteError(err.message || 'Failed to delete category.');
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
-
-  const fetchCategories = async () => {
+  const fetchProducts = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.getCategories(token, page, 10, 'id', 'asc');
+      const response = await api.getProducts(token, page, 10, 'id', 'asc');
       
       const fetchedContent = response?.data?.content || [];
-      setCategories(fetchedContent);
+      setProducts(fetchedContent);
       setTotalPages(response?.data?.totalPages || 0);
       setTotalElements(response?.data?.totalElements || 0);
     } catch (err: any) {
-      console.error('Fetch categories error:', err);
-      setError(err.message || 'An unexpected error occurred while fetching categories.');
+      console.error('Fetch products error:', err);
+      setError(err.message || 'An unexpected error occurred while fetching products.');
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      // Fetch categories options for form dropdown (large size to get all of them)
+      const response = await api.getCategories(token, 0, 100, 'name', 'asc');
+      const fetchedCategories = response?.data?.content || [];
+      setCategories(fetchedCategories.map((c: any) => ({ id: c.id, name: c.name })));
+    } catch (err) {
+      console.error('Failed to load category options:', err);
+    }
+  };
+
   useEffect(() => {
-    fetchCategories();
+    fetchProducts();
   }, [token, page]);
 
-  const filteredCategories = useMemo(() => {
-    return categories.filter((c) => {
+  useEffect(() => {
+    fetchCategories();
+  }, [token]);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
       const searchLower = searchQuery.toLowerCase();
       return (
-        c.name.toLowerCase().includes(searchLower) ||
-        c.description.toLowerCase().includes(searchLower)
+        p.name.toLowerCase().includes(searchLower) ||
+        (p.categoryName && p.categoryName.toLowerCase().includes(searchLower)) ||
+        p.description.toLowerCase().includes(searchLower)
       );
     });
-  }, [categories, searchQuery]);
+  }, [products, searchQuery]);
+
+  const handleCreateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createName.trim()) {
+      setCreateError('Product name is required.');
+      return;
+    }
+    if (createCategoryId === '') {
+      setCreateError('Please select a category.');
+      return;
+    }
+    if (createPrice === '' || createPrice < 0) {
+      setCreateError('Please enter a valid price (0 or greater).');
+      return;
+    }
+    if (createStock === '' || createStock < 0) {
+      setCreateError('Please enter a valid stock level (0 or greater).');
+      return;
+    }
+
+    try {
+      setCreateLoading(true);
+      setCreateError(null);
+      await api.createProduct(token, {
+        name: createName.trim(),
+        description: createDescription.trim(),
+        categoryId: Number(createCategoryId),
+        price: Number(createPrice),
+        stock: Number(createStock)
+      });
+
+      // Clear fields on success
+      setCreateName('');
+      setCreateDescription('');
+      setCreateCategoryId('');
+      setCreatePrice('');
+      setCreateStock('');
+      setCreateError(null);
+      setShowCreateModal(false);
+      fetchProducts();
+    } catch (err: any) {
+      console.error('Create product error:', err);
+      setCreateError(err.message || 'Failed to create product.');
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const startEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setEditName(product.name);
+    setEditDescription(product.description || '');
+    setEditCategoryId(product.categoryId);
+    setEditPrice(product.price);
+    setEditStock(product.stock);
+    setEditError(null);
+  };
+
+  const handleUpdateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    if (!editName.trim()) {
+      setEditError('Product name is required.');
+      return;
+    }
+    if (editCategoryId === '') {
+      setEditError('Please select a category.');
+      return;
+    }
+    if (editPrice === '' || editPrice < 0) {
+      setEditError('Please enter a valid price (0 or greater).');
+      return;
+    }
+    if (editStock === '' || editStock < 0) {
+      setEditError('Please enter a valid stock level (0 or greater).');
+      return;
+    }
+
+    try {
+      setEditLoading(true);
+      setEditError(null);
+      await api.updateProduct(token, editingProduct.id, {
+        name: editName.trim(),
+        description: editDescription.trim(),
+        categoryId: Number(editCategoryId),
+        price: Number(editPrice),
+        stock: Number(editStock)
+      });
+      setEditingProduct(null);
+      fetchProducts();
+    } catch (err: any) {
+      console.error('Update product error:', err);
+      setEditError(err.message || 'Failed to update product.');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!deletingProduct) return;
+    try {
+      setDeleteLoading(true);
+      setDeleteError(null);
+      await api.deleteProduct(token, deletingProduct.id);
+      setDeletingProduct(null);
+      fetchProducts();
+    } catch (err: any) {
+      console.error('Delete product error:', err);
+      setDeleteError(err.message || 'Failed to delete product.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
 
 
@@ -206,14 +262,14 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
               justifyContent: 'center',
               color: 'var(--primary-400)'
             }}>
-              <Tag size={22} />
+              <ShoppingBag size={22} />
             </div>
             <div>
               <h2 style={{ fontSize: '24px', fontWeight: 700, margin: 0, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
-                Product Categories
+                Store Products
               </h2>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
-                Manage product categorization and metadata details
+                Manage catalog items, pricing structures, and inventory levels
               </p>
             </div>
           </div>
@@ -241,11 +297,11 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             onMouseOut={(e) => e.currentTarget.style.transform = 'none'}
           >
             <Plus size={14} />
-            <span>Create Category</span>
+            <span>Create Product</span>
           </button>
 
           <button
-            onClick={fetchCategories}
+            onClick={fetchProducts}
             disabled={loading}
             style={{
               background: 'rgba(255, 255, 255, 0.03)',
@@ -292,7 +348,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
           <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
             type="text"
-            placeholder="Search by category name, description..."
+            placeholder="Search by product name, category..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -344,7 +400,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             borderRadius: '50%',
             margin: '0 auto 16px'
           }} />
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Loading platform categories...</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Loading store products...</p>
         </div>
       ) : error ? (
         <div style={{
@@ -357,10 +413,10 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
           margin: '0 auto'
         }}>
           <AlertCircle size={36} style={{ color: 'var(--error)', marginBottom: '12px' }} />
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#f87171', marginBottom: '6px' }}>Failed to retrieve categories</h3>
+          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#f87171', marginBottom: '6px' }}>Failed to retrieve products</h3>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>{error}</p>
           <button
-            onClick={fetchCategories}
+            onClick={fetchProducts}
             style={{
               background: 'var(--primary-600)',
               border: 'none',
@@ -375,7 +431,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             Try Again
           </button>
         </div>
-      ) : filteredCategories.length === 0 ? (
+      ) : filteredProducts.length === 0 ? (
         <div style={{
           background: 'rgba(15, 12, 30, 0.2)',
           border: '1px dashed var(--border-card)',
@@ -383,10 +439,10 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
           padding: '48px 24px',
           textAlign: 'center'
         }}>
-          <Tag size={36} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
-          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No categories found</h3>
+          <ShoppingBag size={36} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
+          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No products found</h3>
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '320px', margin: '0 auto' }}>
-            We couldn't find any categories matching your search query.
+            We couldn't find any products matching your search query.
           </p>
         </div>
       ) : (
@@ -402,16 +458,19 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-card)', background: 'rgba(255, 255, 255, 0.01)' }}>
-                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category Details</th>
+                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Product Details</th>
                   <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Description</th>
-                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Actions</th>
+                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category</th>
+                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Price</th>
+                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Stock</th>
+                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredCategories.map((category) => {
+                {filteredProducts.map((product) => {
                   return (
                     <tr
-                      key={category.id}
+                      key={product.id}
                       style={{
                         borderBottom: '1px solid var(--border-card)',
                         transition: 'background 0.2s ease'
@@ -419,7 +478,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                       onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)'}
                       onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
-                      {/* Name Details */}
+                      {/* Product Name */}
                       <td style={{ padding: '16px 24px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                           <div style={{
@@ -435,79 +494,102 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                             fontWeight: 600,
                             color: 'var(--primary-300)'
                           }}>
-                            <FolderOpen size={16} />
+                            <ShoppingBag size={16} />
                           </div>
                           <div>
                             <div style={{ fontWeight: 600, color: 'white', fontSize: '14px' }}>
-                              {category.name}
+                              {product.name}
                             </div>
                             <div style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '2px' }}>
-                              ID: #{category.id}
+                              ID: #{product.id}
                             </div>
                           </div>
                         </div>
                       </td>
 
                       {/* Description */}
-                      <td style={{ padding: '16px 24px', fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {category.description || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No description</span>}
+                      <td style={{ padding: '16px 24px', fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {product.description || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No description</span>}
+                      </td>
+
+                      {/* Category */}
+                      <td style={{ padding: '16px 24px' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.15)', fontSize: '12px', color: 'var(--primary-300)', fontWeight: 500 }}>
+                          <Tag size={12} />
+                          <span>{product.categoryName || `ID: ${product.categoryId}`}</span>
+                        </div>
+                      </td>
+
+                      {/* Price */}
+                      <td style={{ padding: '16px 24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '14px', fontWeight: 600, color: 'white' }}>
+                          <IndianRupee size={14} style={{ color: 'var(--text-muted)' }} />
+                          <span>{product.price.toFixed(2)}</span>
+                        </div>
+                      </td>
+
+                      {/* Stock */}
+                      <td style={{ padding: '16px 24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: product.stock === 0 ? '#ef4444' : product.stock < 10 ? '#f59e0b' : 'white' }}>
+                          <Archive size={13} style={{ opacity: 0.7 }} />
+                          <span>{product.stock} pcs</span>
+                        </div>
                       </td>
 
                       {/* Actions */}
-                      <td style={{ padding: '16px 24px', textAlign: 'center' }}>
-                        <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
+                      <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              startEditCategory(category.id);
-                            }}
-                            title="Edit Category"
+                            onClick={() => startEditProduct(product)}
                             style={{
                               background: 'rgba(255, 255, 255, 0.03)',
                               border: '1px solid var(--border-card)',
-                              borderRadius: '8px',
-                              padding: '6px 10px',
                               color: 'var(--primary-300)',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '8px',
+                              display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
+                              cursor: 'pointer',
                               transition: 'var(--transition-fast)'
                             }}
                             onMouseOver={(e) => {
                               e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)';
+                              e.currentTarget.style.color = 'var(--primary-200)';
                             }}
                             onMouseOut={(e) => {
                               e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                              e.currentTarget.style.color = 'var(--primary-300)';
                             }}
+                            title="Edit Product"
                           >
                             <Edit2 size={14} />
                           </button>
-                          
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              startDeleteCategory(category.id);
-                            }}
-                            title="Delete Category"
+                            onClick={() => setDeletingProduct(product)}
                             style={{
-                              background: 'rgba(239, 68, 68, 0.1)',
-                              border: '1px solid rgba(239, 68, 68, 0.2)',
+                              background: 'rgba(255, 255, 255, 0.03)',
+                              border: '1px solid var(--border-card)',
+                              color: '#ef4444',
+                              width: '32px',
+                              height: '32px',
                               borderRadius: '8px',
-                              padding: '6px 10px',
-                              color: '#fca5a5',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
+                              display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
+                              cursor: 'pointer',
                               transition: 'var(--transition-fast)'
                             }}
                             onMouseOver={(e) => {
-                              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
+                              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                              e.currentTarget.style.color = '#f87171';
                             }}
                             onMouseOut={(e) => {
-                              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                              e.currentTarget.style.color = '#ef4444';
                             }}
+                            title="Delete Product"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -522,7 +604,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
           {/* Pagination Controls */}
           <div style={{ padding: '16px 24px', background: 'rgba(255, 255, 255, 0.01)', borderTop: '1px solid var(--border-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
             <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-              Showing <strong>{filteredCategories.length}</strong> of <strong>{totalElements}</strong> categories
+              Showing <strong>{filteredProducts.length}</strong> of <strong>{totalElements}</strong> products
             </span>
             {totalPages > 1 && (
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -564,7 +646,8 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
           </div>
         </div>
       )}
-      {/* Create Category Modal Overlay */}
+
+      {/* Create Product Modal Overlay */}
       {showCreateModal && (
         <div style={{
           position: 'fixed',
@@ -591,7 +674,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             border: '1px solid var(--border-card)',
             borderRadius: '24px',
             width: '100%',
-            maxWidth: '480px',
+            maxWidth: '520px',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(139, 92, 246, 0.15)',
             overflow: 'hidden',
             animation: 'scale-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
@@ -609,7 +692,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             }}>
               <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Plus size={18} style={{ color: 'var(--primary-400)' }} />
-                <span>Create New Category</span>
+                <span>Create New Product</span>
               </h3>
               <button
                 onClick={() => {
@@ -642,8 +725,8 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             </div>
 
             {/* Modal Body Form */}
-            <form onSubmit={handleCreateCategory}>
-              <div style={{ padding: '24px' }}>
+            <form onSubmit={handleCreateProduct}>
+              <div style={{ padding: '24px', maxHeight: '70vh', overflowY: 'auto' }}>
                 {createError && (
                   <div style={{
                     background: 'rgba(239, 68, 68, 0.05)',
@@ -662,14 +745,14 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                   </div>
                 )}
 
-                <div className="form-group" style={{ marginBottom: '20px' }}>
-                  <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
-                    Category Name <span style={{ color: 'var(--error)' }}>*</span>
+                {/* Name */}
+                <div className="form-group" style={{ marginBottom: '18px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                    Product Name <span style={{ color: 'var(--error)' }}>*</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Electronics, Home & Kitchen"
-                    className="form-input"
+                    placeholder="e.g. Wireless Mouse, Mechanical Keyboard"
                     value={createName}
                     onChange={(e) => setCreateName(e.target.value)}
                     disabled={createLoading}
@@ -686,13 +769,95 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                   />
                 </div>
 
+                {/* Category Dropdown */}
+                <div className="form-group" style={{ marginBottom: '18px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                    Category <span style={{ color: 'var(--error)' }}>*</span>
+                  </label>
+                  <select
+                    value={createCategoryId}
+                    onChange={(e) => setCreateCategoryId(e.target.value === '' ? '' : Number(e.target.value))}
+                    disabled={createLoading}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(15, 12, 30, 0.95)',
+                      border: '1px solid var(--border-card)',
+                      borderRadius: '10px',
+                      padding: '12px 14px',
+                      color: 'white',
+                      fontSize: '14px',
+                      outline: 'none'
+                    }}
+                  >
+                    <option value="" style={{ background: 'var(--bg-main)' }}>Select a category</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id} style={{ background: 'var(--bg-main)' }}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Price & Stock inline */}
+                <div style={{ display: 'flex', gap: '16px', marginBottom: '18px' }}>
+                  {/* Price */}
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                      Price (INR) <span style={{ color: 'var(--error)' }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 799"
+                      value={createPrice}
+                      onChange={(e) => setCreatePrice(e.target.value === '' ? '' : Number(e.target.value))}
+                      disabled={createLoading}
+                      min={0}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid var(--border-card)',
+                        borderRadius: '10px',
+                        padding: '12px 14px',
+                        color: 'white',
+                        fontSize: '14px',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+
+                  {/* Stock */}
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                      Stock Quantity <span style={{ color: 'var(--error)' }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 25"
+                      value={createStock}
+                      onChange={(e) => setCreateStock(e.target.value === '' ? '' : Number(e.target.value))}
+                      disabled={createLoading}
+                      min={0}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid var(--border-card)',
+                        borderRadius: '10px',
+                        padding: '12px 14px',
+                        color: 'white',
+                        fontSize: '14px',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Description */}
                 <div className="form-group" style={{ marginBottom: '8px' }}>
-                  <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
                     Description
                   </label>
                   <textarea
-                    placeholder="Provide a brief description of products in this category..."
-                    className="form-input"
+                    placeholder="Provide detailed description of this product..."
                     value={createDescription}
                     onChange={(e) => setCreateDescription(e.target.value)}
                     disabled={createLoading}
@@ -757,15 +922,16 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                     cursor: 'pointer'
                   }}
                 >
-                  {createLoading ? 'Creating...' : 'Create Category'}
+                  {createLoading ? 'Creating...' : 'Create Product'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-      {/* Edit Category Modal Overlay */}
-      {editingCategory !== null && (
+
+      {/* Edit Product Modal Overlay */}
+      {editingProduct && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -782,7 +948,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
           animation: 'fade-in 0.25s ease-out'
         }}
         onClick={() => {
-          setEditingCategory(null);
+          setEditingProduct(null);
           setEditError(null);
         }}
         >
@@ -791,7 +957,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             border: '1px solid var(--border-card)',
             borderRadius: '24px',
             width: '100%',
-            maxWidth: '480px',
+            maxWidth: '520px',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(139, 92, 246, 0.15)',
             overflow: 'hidden',
             animation: 'scale-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
@@ -809,11 +975,11 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             }}>
               <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Edit2 size={18} style={{ color: 'var(--primary-400)' }} />
-                <span>Edit Category Details</span>
+                <span>Edit Product</span>
               </h3>
               <button
                 onClick={() => {
-                  setEditingCategory(null);
+                  setEditingProduct(null);
                   setEditError(null);
                 }}
                 style={{
@@ -842,8 +1008,8 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             </div>
 
             {/* Modal Body Form */}
-            <form onSubmit={handleUpdateCategory}>
-              <div style={{ padding: '24px' }}>
+            <form onSubmit={handleUpdateProduct}>
+              <div style={{ padding: '24px', maxHeight: '70vh', overflowY: 'auto' }}>
                 {editError && (
                   <div style={{
                     background: 'rgba(239, 68, 68, 0.05)',
@@ -862,14 +1028,14 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                   </div>
                 )}
 
-                <div className="form-group" style={{ marginBottom: '20px' }}>
-                  <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
-                    Category Name <span style={{ color: 'var(--error)' }}>*</span>
+                {/* Name */}
+                <div className="form-group" style={{ marginBottom: '18px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                    Product Name <span style={{ color: 'var(--error)' }}>*</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Electronics, Home & Kitchen"
-                    className="form-input"
+                    placeholder="e.g. Wireless Mouse, Mechanical Keyboard"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     disabled={editLoading}
@@ -886,13 +1052,95 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                   />
                 </div>
 
+                {/* Category Dropdown */}
+                <div className="form-group" style={{ marginBottom: '18px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                    Category <span style={{ color: 'var(--error)' }}>*</span>
+                  </label>
+                  <select
+                    value={editCategoryId}
+                    onChange={(e) => setEditCategoryId(e.target.value === '' ? '' : Number(e.target.value))}
+                    disabled={editLoading}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(15, 12, 30, 0.95)',
+                      border: '1px solid var(--border-card)',
+                      borderRadius: '10px',
+                      padding: '12px 14px',
+                      color: 'white',
+                      fontSize: '14px',
+                      outline: 'none'
+                    }}
+                  >
+                    <option value="" style={{ background: 'var(--bg-main)' }}>Select a category</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id} style={{ background: 'var(--bg-main)' }}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Price & Stock inline */}
+                <div style={{ display: 'flex', gap: '16px', marginBottom: '18px' }}>
+                  {/* Price */}
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                      Price (INR) <span style={{ color: 'var(--error)' }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 799"
+                      value={editPrice}
+                      onChange={(e) => setEditPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                      disabled={editLoading}
+                      min={0}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid var(--border-card)',
+                        borderRadius: '10px',
+                        padding: '12px 14px',
+                        color: 'white',
+                        fontSize: '14px',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+
+                  {/* Stock */}
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                      Stock Quantity <span style={{ color: 'var(--error)' }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 25"
+                      value={editStock}
+                      onChange={(e) => setEditStock(e.target.value === '' ? '' : Number(e.target.value))}
+                      disabled={editLoading}
+                      min={0}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid var(--border-card)',
+                        borderRadius: '10px',
+                        padding: '12px 14px',
+                        color: 'white',
+                        fontSize: '14px',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Description */}
                 <div className="form-group" style={{ marginBottom: '8px' }}>
-                  <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
                     Description
                   </label>
                   <textarea
-                    placeholder="Provide a brief description of products in this category..."
-                    className="form-input"
+                    placeholder="Provide detailed description of this product..."
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
                     disabled={editLoading}
@@ -925,7 +1173,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                 <button
                   type="button"
                   onClick={() => {
-                    setEditingCategory(null);
+                    setEditingProduct(null);
                     setEditError(null);
                   }}
                   disabled={editLoading}
@@ -964,8 +1212,9 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
           </div>
         </div>
       )}
-      {/* Delete Category Modal Overlay */}
-      {deletingCategory !== null && (
+
+      {/* Delete Confirmation Modal Overlay */}
+      {deletingProduct && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -982,7 +1231,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
           animation: 'fade-in 0.25s ease-out'
         }}
         onClick={() => {
-          setDeletingCategory(null);
+          setDeletingProduct(null);
           setDeleteError(null);
         }}
         >
@@ -998,51 +1247,28 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
           }}
           onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '20px 24px',
-              borderBottom: '1px solid var(--border-card)',
-              background: 'rgba(255, 255, 255, 0.01)'
-            }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171' }}>
-                <Trash2 size={18} />
-                <span>Delete Category</span>
-              </h3>
-              <button
-                onClick={() => {
-                  setDeletingCategory(null);
-                  setDeleteError(null);
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'var(--transition-fast)'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.color = 'white';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = 'none';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
-                }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Modal Body Content */}
             <div style={{ padding: '24px' }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '16px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#ef4444',
+                marginBottom: '20px'
+              }}>
+                <Trash2 size={24} />
+              </div>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 8px 0', fontFamily: 'var(--font-display)' }}>
+                Delete Product
+              </h3>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 20px 0', lineHeight: 1.5 }}>
+                Are you sure you want to delete <strong>{deletingProduct.name}</strong>? This action cannot be undone and will permanently remove the product from the catalog.
+              </p>
+
               {deleteError && (
                 <div style={{
                   background: 'rgba(239, 68, 68, 0.05)',
@@ -1056,65 +1282,51 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                  <AlertCircle size={16} />
                   <span>{deleteError}</span>
                 </div>
               )}
 
-              <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
-                Are you sure you want to delete the category <strong style={{ color: 'white' }}>{deletingCategory.name}</strong>?
-              </p>
-              <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#fca5a5' }}>
-                Warning: This action is permanent and cannot be undone.
-              </p>
-            </div>
-
-            {/* Modal Footer */}
-            <div style={{
-              padding: '16px 24px',
-              borderTop: '1px solid var(--border-card)',
-              background: 'rgba(255, 255, 255, 0.01)',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '12px'
-            }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setDeletingCategory(null);
-                  setDeleteError(null);
-                }}
-                disabled={deleteLoading}
-                style={{
-                  background: 'none',
-                  border: '1px solid var(--border-card)',
-                  color: 'white',
-                  padding: '8px 16px',
-                  borderRadius: '10px',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteCategory}
-                disabled={deleteLoading}
-                style={{
-                  padding: '8px 20px',
-                  fontSize: '13px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
-                  border: 'none',
-                  color: 'white',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                {deleteLoading ? 'Deleting...' : 'Delete Category'}
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button
+                  onClick={() => {
+                    setDeletingProduct(null);
+                    setDeleteError(null);
+                  }}
+                  disabled={deleteLoading}
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--border-card)',
+                    color: 'white',
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteProduct}
+                  disabled={deleteLoading}
+                  style={{
+                    background: '#ef4444',
+                    border: 'none',
+                    color: 'white',
+                    padding: '8px 20px',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'var(--transition-fast)'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.background = '#dc2626'}
+                  onMouseOut={(e) => e.currentTarget.style.background = '#ef4444'}
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete Product'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

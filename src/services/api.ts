@@ -1,6 +1,6 @@
 // E-commerce API Client Configuration
-// const API_BASE_URL = 'https://authservice-84yz.onrender.com/api';
-const API_BASE_URL = 'http://localhost:8081/api';
+const API_BASE_URL = 'https://authservice-38dc.onrender.com/api';
+// const API_BASE_URL = 'http://localhost:8081/api';
 
 export interface User {
   id: string;
@@ -331,8 +331,7 @@ export const api = {
   async createProduct(token: string, payload: {
     name: string;
     description: string;
-    categoryId: string;
-    category: string;
+    categoryId: number;
     price: number;
     stock: number;
   }): Promise<any> {
@@ -343,6 +342,41 @@ export const api = {
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(payload)
+    });
+    return await handleResponse<any>(response);
+  },
+
+  /**
+   * Update an existing product
+   */
+  async updateProduct(token: string, id: number, payload: {
+    name: string;
+    description: string;
+    categoryId: number;
+    price: number;
+    stock: number;
+  }): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    return await handleResponse<any>(response);
+  },
+
+  /**
+   * Delete an existing product
+   */
+  async deleteProduct(token: string, id: number): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
     });
     return await handleResponse<any>(response);
   },
