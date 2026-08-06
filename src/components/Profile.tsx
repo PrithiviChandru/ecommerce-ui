@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { User as UserIcon, Mail, Phone, Globe, Calendar, ArrowLeft, AlertCircle, Shield, Edit, Save, X, CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react';
+import { User as UserIcon, Mail, Phone, Globe, ArrowLeft, AlertCircle, Shield, Edit, Save, X, CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react';
 import { api } from '../services/api';
 import type { ProfileData } from '../services/api';
 
@@ -116,20 +116,7 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
     };
   }, [token]);
 
-  const formatDate = (dateString: string) => {
-    try {
-      const options: Intl.DateTimeFormatOptions = { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      };
-      return new Date(dateString).toLocaleDateString(undefined, options);
-    } catch {
-      return dateString;
-    }
-  };
+
 
   const handleSaveChanges = async () => {
     if (!editFirstName.trim()) {
@@ -638,31 +625,6 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
           </button>
         </div>
       )}
-
-      <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '16px' }}>Account History</h3>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        gap: '16px'
-      }}>
-        {/* Created At */}
-        <div style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-card)', padding: '16px', borderRadius: '12px', display: 'flex', gap: '14px', alignItems: 'center' }}>
-          <Calendar style={{ color: 'var(--primary-400)', flexShrink: 0 }} size={20} />
-          <div>
-            <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Member Since</span>
-            <span style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>{formatDate(profile.createdAt)}</span>
-          </div>
-        </div>
-
-        {/* Updated At */}
-        <div style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-card)', padding: '16px', borderRadius: '12px', display: 'flex', gap: '14px', alignItems: 'center' }}>
-          <Calendar style={{ color: 'var(--primary-400)', flexShrink: 0 }} size={20} />
-          <div>
-            <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Last Updated</span>
-            <span style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>{formatDate(profile.updatedAt)}</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

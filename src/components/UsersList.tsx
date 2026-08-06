@@ -362,7 +362,6 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                   <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>User Details</th>
                   <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Role</th>
                   <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phone / Timezone</th>
-                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Created At</th>
                   <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
@@ -448,18 +447,6 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>
                           <Globe size={12} style={{ color: 'var(--text-muted)' }} />
                           <span>{user.timeZone}</span>
-                        </div>
-                      </td>
-
-                      {/* Created date */}
-                      <td style={{ padding: '16px 24px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'white' }}>
-                          <Calendar size={12} style={{ color: 'var(--text-muted)' }} />
-                          <span>{formatDate(user.createdAt)}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>
-                          <Clock size={12} style={{ color: 'var(--text-muted)' }} />
-                          <span>{new Date(user.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                       </td>
 

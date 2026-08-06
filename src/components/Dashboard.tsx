@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ShoppingCart, LogOut, Tag, Check, ShoppingBag, X, Users } from 'lucide-react';
+import { Search, ShoppingCart, LogOut, Tag, Check, ShoppingBag, X, Users, LayoutDashboard } from 'lucide-react';
 import { Profile } from './Profile';
 import { UsersList } from './UsersList';
-import { CategoriesList } from './CategoriesList';
+import { CatalogManagement } from './CatalogManagement';
 import { api } from '../services/api';
 
 // interface Product {
@@ -55,15 +55,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
   const [cart, setCart] = useState<{ [productId: number]: number }>({});
   const [showCartToast, setShowCartToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [currentTab, setCurrentTab] = useState<'products' | 'profile' | 'users' | 'categories'>('products');
+  const [currentTab, setCurrentTab] = useState<'products' | 'profile' | 'users' | 'catalog' | 'overview'>('products');
   const [userRole, setUserRole] = useState<string | null>(null);
+  
+  // Admin stats states
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalCategories, setTotalCategories] = useState(0);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
         const response = await api.getProfile(token);
         if (response.apiStatus) {
-          setUserRole(response.data.role);
+          const role = response.data.role;
+          setUserRole(role);
+          if (role === 'ADMIN') {
+            setCurrentTab('overview');
+          }
         }
       } catch (err) {
         console.error('Failed to fetch user role for admin access:', err);
@@ -73,6 +83,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
       fetchUserRole();
     }
   }, [token]);
+
+  const fetchAdminStats = async () => {
+    try {
+      setStatsLoading(true);
+      const [prodResponse, catResponse, usersResponse] = await Promise.all([
+        api.getProducts(token, 0, 1),
+        api.getCategories(token, 0, 1),
+        api.getUsers(token)
+      ]);
+      setTotalProducts(prodResponse?.data?.totalElements || 0);
+      setTotalCategories(catResponse?.data?.totalElements || 0);
+      setTotalUsers(usersResponse?.data?.length || 0);
+    } catch (err) {
+      console.error('Failed to fetch admin stats:', err);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token && userRole === 'ADMIN') {
+      fetchAdminStats();
+    }
+  }, [token, userRole]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -262,7 +296,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
           </div>
 
           {/* Shop Navigation Button */}
-          {currentTab !== 'products' && (
+          {userRole !== 'ADMIN' && currentTab !== 'products' && (
             <button
               onClick={() => setCurrentTab('products')}
               style={{
@@ -284,6 +318,66 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
               }}
             >
               Shop
+            </button>
+          )}
+
+          {/* Overview Navigation Button (Admin Only) */}
+          {userRole === 'ADMIN' && (
+            <button
+              onClick={() => setCurrentTab('overview')}
+              style={{
+                background: currentTab === 'overview' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-card)',
+                borderRadius: '30px',
+                padding: '8px 16px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = currentTab === 'overview' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = currentTab === 'overview' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+              }}
+            >
+              <LayoutDashboard size={14} />
+              <span>Overview</span>
+            </button>
+          )}
+
+          {/* Catalog Management Button (Admin Only) */}
+          {userRole === 'ADMIN' && (
+            <button
+              onClick={() => setCurrentTab('catalog')}
+              style={{
+                background: currentTab === 'catalog' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-card)',
+                borderRadius: '30px',
+                padding: '8px 16px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = currentTab === 'catalog' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = currentTab === 'catalog' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+              }}
+            >
+              <ShoppingBag size={14} />
+              <span>Manage Catalog</span>
             </button>
           )}
 
@@ -317,36 +411,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
             </button>
           )}
 
-          {/* Categories Navigation Button (Admin Only) */}
-          {userRole === 'ADMIN' && (
-            <button
-              onClick={() => setCurrentTab('categories')}
-              style={{
-                background: currentTab === 'categories' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = currentTab === 'categories' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = currentTab === 'categories' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              <Tag size={14} />
-              <span>Categories</span>
-            </button>
-          )}
-
           {/* Profile Navigation Button */}
           <button
             onClick={() => setCurrentTab('profile')}
@@ -372,30 +436,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
           </button>
 
           {/* Cart Icon */}
-          <div style={{ position: 'relative', cursor: 'pointer', padding: '6px' }}>
-            <ShoppingCart size={22} style={{ color: 'var(--text-primary)', opacity: 0.9 }} />
-            {totalCartItems > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '-2px',
-                right: '-2px',
-                background: 'var(--primary-500)',
-                color: 'white',
-                fontSize: '11px',
-                fontWeight: 700,
-                width: '18px',
-                height: '18px',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 0 8px rgba(139, 92, 246, 0.6)',
-                animation: 'scale-up 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-              }}>
-                {totalCartItems}
-              </span>
-            )}
-          </div>
+          {userRole !== 'ADMIN' && (
+            <div style={{ position: 'relative', cursor: 'pointer', padding: '6px' }}>
+              <ShoppingCart size={22} style={{ color: 'var(--text-primary)', opacity: 0.9 }} />
+              {totalCartItems > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-2px',
+                  right: '-2px',
+                  background: 'var(--primary-500)',
+                  color: 'white',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0 8px rgba(139, 92, 246, 0.6)',
+                  animation: 'scale-up 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+                }}>
+                  {totalCartItems}
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Logout Button */}
           <button
@@ -430,11 +496,240 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
       {/* Main Content Area */}
       <div>
         {currentTab === 'profile' ? (
-          <Profile token={token} onBack={() => setCurrentTab('products')} />
+          <Profile token={token} onBack={() => setCurrentTab(userRole === 'ADMIN' ? 'overview' : 'products')} />
         ) : currentTab === 'users' ? (
-          <UsersList token={token} onBack={() => setCurrentTab('products')} />
-        ) : currentTab === 'categories' ? (
-          <CategoriesList token={token} onBack={() => setCurrentTab('products')} />
+          <UsersList token={token} onBack={() => setCurrentTab(userRole === 'ADMIN' ? 'overview' : 'products')} />
+        ) : currentTab === 'catalog' ? (
+          <CatalogManagement token={token} onBack={() => setCurrentTab(userRole === 'ADMIN' ? 'overview' : 'products')} />
+        ) : currentTab === 'overview' ? (
+          <div style={{ animation: 'fade-in 0.4s ease-out' }}>
+            <h2 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '6px', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
+              Admin Control Panel
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '32px' }}>
+              Welcome back! Here is a summary of the store's current catalog and registered users.
+            </p>
+
+            {/* Stats Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '24px',
+              marginBottom: '40px'
+            }}>
+              {/* Products Card */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.03) 100%)',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                borderRadius: '24px',
+                padding: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '20px',
+                boxShadow: '0 10px 20px rgba(0, 0, 0, 0.15)'
+              }}>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  background: 'rgba(139, 92, 246, 0.15)',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--primary-400)'
+                }}>
+                  <ShoppingBag size={24} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Products</div>
+                  <div style={{ fontSize: '32px', fontWeight: 700, color: 'white', marginTop: '4px' }}>
+                    {statsLoading ? '...' : totalProducts}
+                  </div>
+                </div>
+              </div>
+
+              {/* Categories Card */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.03) 100%)',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+                borderRadius: '24px',
+                padding: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '20px',
+                boxShadow: '0 10px 20px rgba(0, 0, 0, 0.15)'
+              }}>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#34d399'
+                }}>
+                  <Tag size={24} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Categories</div>
+                  <div style={{ fontSize: '32px', fontWeight: 700, color: 'white', marginTop: '4px' }}>
+                    {statsLoading ? '...' : totalCategories}
+                  </div>
+                </div>
+              </div>
+
+              {/* Users Card */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.03) 100%)',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                borderRadius: '24px',
+                padding: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '20px',
+                boxShadow: '0 10px 20px rgba(0, 0, 0, 0.15)'
+              }}>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  background: 'rgba(59, 130, 246, 0.15)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#60a5fa'
+                }}>
+                  <Users size={24} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Registered Users</div>
+                  <div style={{ fontSize: '32px', fontWeight: 700, color: 'white', marginTop: '4px' }}>
+                    {statsLoading ? '...' : totalUsers}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions Panel */}
+            <div style={{
+              background: 'rgba(15, 12, 30, 0.4)',
+              border: '1px solid var(--border-card)',
+              borderRadius: '24px',
+              padding: '32px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)'
+            }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px', fontFamily: 'var(--font-display)' }}>
+                System Quick Actions
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                <button
+                  onClick={() => setCurrentTab('catalog')}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid var(--border-card)',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '12px',
+                    textAlign: 'center',
+                    transition: 'var(--transition-smooth)'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--primary-500)';
+                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.05)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border-card)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                  }}
+                >
+                  <ShoppingBag size={24} style={{ color: 'var(--primary-400)' }} />
+                  <div>
+                    <div style={{ fontWeight: 600 }}>Manage Catalog</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 400, marginTop: '4px' }}>Add & edit products or categories</div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setCurrentTab('users')}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid var(--border-card)',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '12px',
+                    textAlign: 'center',
+                    transition: 'var(--transition-smooth)'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--primary-500)';
+                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.05)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border-card)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                  }}
+                >
+                  <Users size={24} style={{ color: '#60a5fa' }} />
+                  <div>
+                    <div style={{ fontWeight: 600 }}>Manage Users</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 400, marginTop: '4px' }}>View store managers and permissions</div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setCurrentTab('profile')}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid var(--border-card)',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '12px',
+                    textAlign: 'center',
+                    transition: 'var(--transition-smooth)'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--primary-500)';
+                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.05)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border-card)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                  }}
+                >
+                  <LayoutDashboard size={24} style={{ color: '#34d399' }} />
+                  <div>
+                    <div style={{ fontWeight: 600 }}>Admin Profile</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 400, marginTop: '4px' }}>Update profile settings and credentials</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
         ) : (
           <>
             {loading ? (
