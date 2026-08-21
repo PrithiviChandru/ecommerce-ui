@@ -451,5 +451,105 @@ export const api = {
       body: JSON.stringify(payload)
     });
     return await handleResponse<any>(response);
+  },
+
+  /**
+   * Place a new order
+   */
+  async createOrder(token: string, payload: { productId: number; quantity: number }): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    return await handleResponse<any>(response);
+  },
+
+  /**
+   * Fetch all orders for the current user
+   */
+  async getOrders(token: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/orders/my`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return await handleResponse<any>(response);
+  },
+
+  /**
+   * Fetch individual order detail by ID
+   */
+  async getOrderById(token: string, orderId: number): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return await handleResponse<any>(response);
+  },
+
+  /**
+   * Cancel an order by ID
+   */
+  async cancelOrder(token: string, orderId: number): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return await handleResponse<any>(response);
+  },
+
+  /**
+   * Fetch all orders in the system (Admin only)
+   */
+  async getAllOrders(token: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/orders`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return await handleResponse<any>(response);
+  },
+
+  /**
+   * Make a payment for an order
+   */
+  async makePayment(token: string, payload: { orderId: number; paymentMethod: string }): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/payments/pay`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    return await handleResponse<any>(response);
+  },
+
+  /**
+   * Fetch all payments for the current user
+   */
+  async getMyPayments(token: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/payments/my`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return await handleResponse<any>(response);
   }
 };
