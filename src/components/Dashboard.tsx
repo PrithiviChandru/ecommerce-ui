@@ -55,9 +55,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
   const [cart, setCart] = useState<{ [productId: number]: number }>({});
   const [showCartToast, setShowCartToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [currentTab, setCurrentTab] = useState<'products' | 'profile' | 'users' | 'catalog' | 'overview'>('products');
+  const [currentTab, setCurrentTab] = useState<'products' | 'profile' | 'users' | 'catalog' | 'overview' | 'orders' | 'payments'>('products');
   const [userRole, setUserRole] = useState<string | null>(null);
   
+  // Cart & Order states
+  const [showCartDrawer, setShowCartDrawer] = useState(false);
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+
+  // Payment states
+  const [payments, setPayments] = useState<any[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [paymentsError, setPaymentsError] = useState<string | null>(null);
+
   // Admin stats states
   const [totalProducts, setTotalProducts] = useState(0);
   const [totalCategories, setTotalCategories] = useState(0);
@@ -160,6 +172,136 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
     setTimeout(() => {
       setShowCartToast(false);
     }, 2500);
+  };
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (currentTab === 'orders' && token) {
+        try {
+          setOrdersLoading(true);
+          setOrdersError(null);
+          const response = userRole === 'ADMIN' ? await api.getAllOrders(token) : await api.getOrders(token);
+          if (response && response.apiStatus && Array.isArray(response.data)) {
+            setOrders(response.data);
+          } else if (Array.isArray(response)) {
+            setOrders(response);
+          } else if (response && Array.isArray(response.data)) {
+            setOrders(response.data);
+          } else {
+            setOrders([]);
+          }
+        } catch (err: any) {
+          console.error('Failed to fetch orders:', err);
+          setOrdersError(err.message || 'Failed to fetch orders');
+        } finally {
+          setOrdersLoading(false);
+        }
+      }
+    };
+    fetchOrders();
+  }, [currentTab, token, userRole]);
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      if (currentTab === 'payments' && token) {
+        try {
+          setPaymentsLoading(true);
+          setPaymentsError(null);
+          const response = await api.getMyPayments(token);
+          if (response && response.apiStatus && Array.isArray(response.data)) {
+            setPayments(response.data);
+          } else if (Array.isArray(response)) {
+            setPayments(response);
+          } else if (response && Array.isArray(response.data)) {
+            setPayments(response.data);
+          } else {
+            setPayments([]);
+          }
+        } catch (err: any) {
+          console.error('Failed to fetch payments:', err);
+          setPaymentsError(err.message || 'Failed to fetch payments');
+        } finally {
+          setPaymentsLoading(false);
+        }
+      }
+    };
+    fetchPayments();
+  }, [currentTab, token]);
+
+  const handleCheckout = async () => {
+    if (Object.keys(cart).length === 0) return;
+    try {
+      setPlacingOrder(true);
+      const cartItems = Object.entries(cart).map(([productId, quantity]) => ({
+        productId: Number(productId),
+        quantity
+      }));
+
+      // Place each order sequentially
+      for (const item of cartItems) {
+        await api.createOrder(token, item);
+      }
+
+      setCart({});
+      setShowCartDrawer(false);
+      setToastMessage('Order placed successfully!');
+      setShowCartToast(true);
+      setTimeout(() => setShowCartToast(false), 3000);
+      setCurrentTab('orders');
+    } catch (err: any) {
+      console.error('Failed to place order:', err);
+      alert(err.message || 'Failed to place order. Please try again.');
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
+
+  const handleCancelOrder = async (orderId: number) => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) return;
+    try {
+      await api.cancelOrder(token, orderId);
+      // Refresh the orders list
+      const response = userRole === 'ADMIN' ? await api.getAllOrders(token) : await api.getOrders(token);
+      if (response && response.apiStatus && Array.isArray(response.data)) {
+        setOrders(response.data);
+      } else if (Array.isArray(response)) {
+        setOrders(response);
+      } else if (response && Array.isArray(response.data)) {
+        setOrders(response.data);
+      }
+      setToastMessage('Order cancelled successfully.');
+      setShowCartToast(true);
+      setTimeout(() => setShowCartToast(false), 3000);
+    } catch (err: any) {
+      console.error('Failed to cancel order:', err);
+      alert(err.message || 'Failed to cancel order.');
+    }
+  };
+
+  const handlePayOrder = async (orderId: number, paymentMethod: string) => {
+    try {
+      const response = await api.makePayment(token, { orderId, paymentMethod });
+      if (response && response.apiStatus && response.data) {
+        setToastMessage(`Payment of ₹${response.data.amount} processed! Status: ${response.data.paymentStatus}`);
+      } else {
+        setToastMessage('Payment completed successfully!');
+      }
+      setShowCartToast(true);
+      setTimeout(() => setShowCartToast(false), 3000);
+
+      // Refresh orders
+      const orderResponse = userRole === 'ADMIN' ? await api.getAllOrders(token) : await api.getOrders(token);
+      if (orderResponse && orderResponse.apiStatus && Array.isArray(orderResponse.data)) {
+        setOrders(orderResponse.data);
+      } else if (Array.isArray(orderResponse)) {
+        setOrders(orderResponse);
+      } else if (orderResponse && Array.isArray(orderResponse.data)) {
+        setOrders(orderResponse.data);
+      }
+    } catch (err: any) {
+      console.error('Failed to make payment:', err);
+      alert(err.message || 'Payment failed.');
+    }
   };
 
   const totalCartItems = Object.values(cart).reduce((sum, count) => sum + count, 0);
@@ -321,6 +463,58 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
             </button>
           )}
 
+          {/* My Orders Button */}
+          {userRole !== 'ADMIN' && (
+            <button
+              onClick={() => setCurrentTab('orders')}
+              style={{
+                background: currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-card)',
+                borderRadius: '30px',
+                padding: '8px 16px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+              }}
+            >
+              My Orders
+            </button>
+          )}
+
+          {/* My Payments Button */}
+          {userRole !== 'ADMIN' && (
+            <button
+              onClick={() => setCurrentTab('payments')}
+              style={{
+                background: currentTab === 'payments' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-card)',
+                borderRadius: '30px',
+                padding: '8px 16px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = currentTab === 'payments' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = currentTab === 'payments' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+              }}
+            >
+              My Payments
+            </button>
+          )}
+
           {/* Overview Navigation Button (Admin Only) */}
           {userRole === 'ADMIN' && (
             <button
@@ -411,6 +605,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
             </button>
           )}
 
+          {/* Orders Navigation Button (Admin Only) */}
+          {userRole === 'ADMIN' && (
+            <button
+              onClick={() => setCurrentTab('orders')}
+              style={{
+                background: currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-card)',
+                borderRadius: '30px',
+                padding: '8px 16px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+              }}
+            >
+              <ShoppingCart size={14} />
+              <span>Orders</span>
+            </button>
+          )}
+
           {/* Profile Navigation Button */}
           <button
             onClick={() => setCurrentTab('profile')}
@@ -437,7 +661,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
 
           {/* Cart Icon */}
           {userRole !== 'ADMIN' && (
-            <div style={{ position: 'relative', cursor: 'pointer', padding: '6px' }}>
+            <div 
+              onClick={() => setShowCartDrawer(true)}
+              style={{ position: 'relative', cursor: 'pointer', padding: '6px' }}
+            >
               <ShoppingCart size={22} style={{ color: 'var(--text-primary)', opacity: 0.9 }} />
               {totalCartItems > 0 && (
                 <span style={{
@@ -501,6 +728,358 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
           <UsersList token={token} onBack={() => setCurrentTab(userRole === 'ADMIN' ? 'overview' : 'products')} />
         ) : currentTab === 'catalog' ? (
           <CatalogManagement token={token} onBack={() => setCurrentTab(userRole === 'ADMIN' ? 'overview' : 'products')} />
+        ) : currentTab === 'orders' ? (
+          <div style={{ animation: 'fade-in 0.4s ease-out' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <div>
+                <h2 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '6px', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
+                  {userRole === 'ADMIN' ? 'Manage Orders' : 'My Orders'}
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                  {userRole === 'ADMIN' ? 'View status and details of all customer orders.' : 'View status and details of your placed orders.'}
+                </p>
+              </div>
+              <button
+                onClick={() => setCurrentTab(userRole === 'ADMIN' ? 'overview' : 'products')}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-card)',
+                  borderRadius: '30px',
+                  padding: '8px 16px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'var(--transition-fast)'
+                }}
+              >
+                {userRole === 'ADMIN' ? 'Back to Overview' : 'Back to Shop'}
+              </button>
+            </div>
+
+            {ordersLoading ? (
+              <div style={{ textAlign: 'center', padding: '64px 24px' }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  border: '3px solid rgba(139, 92, 246, 0.1)',
+                  borderTop: '3px solid var(--primary-500)',
+                  borderRadius: '50%',
+                  margin: '0 auto 16px',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>Loading your orders...</p>
+              </div>
+            ) : ordersError ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '32px 24px',
+                background: 'rgba(239, 68, 68, 0.05)',
+                border: '1px solid rgba(239, 68, 68, 0.15)',
+                borderRadius: '16px',
+                maxWidth: '480px',
+                margin: '0 auto'
+              }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                  Could not fetch orders from the server. ({ordersError})
+                </p>
+              </div>
+            ) : orders.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '64px 24px',
+                background: 'rgba(255, 255, 255, 0.01)',
+                border: '1px dashed var(--border-card)',
+                borderRadius: '24px'
+              }}>
+                <ShoppingBag size={48} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
+                 <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>
+                  {userRole === 'ADMIN' ? 'No orders in system' : 'No orders placed yet'}
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', maxWidth: '360px', margin: '0 auto' }}>
+                  {userRole === 'ADMIN' ? 'There are currently no customer orders recorded in the system.' : "You haven't placed any orders yet. Browse our catalog and add items to your cart!"}
+                </p>
+                <button
+                  onClick={() => setCurrentTab(userRole === 'ADMIN' ? 'overview' : 'products')}
+                  style={{
+                    marginTop: '16px',
+                    background: 'var(--primary-600)',
+                    border: 'none',
+                    color: 'white',
+                    padding: '10px 20px',
+                    borderRadius: '30px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    transition: 'var(--transition-fast)'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.background = 'var(--primary-700)'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'var(--primary-600)'}
+                >
+                  {userRole === 'ADMIN' ? 'Back to Overview' : 'Start Shopping'}
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {orders.map((order: any) => (
+                  <div key={order.orderId} style={{
+                    background: 'rgba(15, 12, 30, 0.4)',
+                    border: '1px solid var(--border-card)',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: 'white' }}>
+                          Order #{order.orderId}
+                        </span>
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '3px 8px',
+                          borderRadius: '12px',
+                          background: order.status === 'CREATED' ? 'rgba(59, 130, 246, 0.15)' : order.status === 'CANCELLED' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                          color: order.status === 'CREATED' ? '#60a5fa' : order.status === 'CANCELLED' ? '#f87171' : '#34d399',
+                          textTransform: 'uppercase'
+                        }}>
+                          {order.status}
+                        </span>
+                      </div>
+                      {userRole === 'ADMIN' && order.userName && (
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                          Customer: <strong>{order.userName}</strong> (User #{order.userId})
+                        </div>
+                      )}
+                      <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--primary-300)', margin: '0 0 4px' }}>
+                        {order.productName}
+                      </h4>
+                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                        Quantity: {order.quantity} | Price: ₹{order.price}
+                      </div>
+                      {order.status === 'CREATED' && userRole !== 'ADMIN' && (
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px', alignItems: 'center' }}>
+                          <select
+                            id={`payment-method-${order.orderId}`}
+                            defaultValue="UPI"
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid var(--border-card)',
+                              borderRadius: '8px',
+                              padding: '5px 8px',
+                              color: 'white',
+                              fontSize: '12px',
+                              outline: 'none'
+                            }}
+                          >
+                            <option value="UPI" style={{ background: '#0d0a1b' }}>UPI</option>
+                            <option value="CARD" style={{ background: '#0d0a1b' }}>Card</option>
+                            <option value="NET_BANKING" style={{ background: '#0d0a1b' }}>Net Banking</option>
+                          </select>
+                          <button
+                            onClick={() => {
+                              const el = document.getElementById(`payment-method-${order.orderId}`) as HTMLSelectElement;
+                              handlePayOrder(order.orderId, el ? el.value : 'UPI');
+                            }}
+                            style={{
+                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                              border: 'none',
+                              borderRadius: '8px',
+                              padding: '6px 12px',
+                              color: 'white',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              boxShadow: '0 4px 10px rgba(16, 185, 129, 0.2)'
+                            }}
+                          >
+                            Pay Now
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                      <div style={{ fontSize: '18px', fontWeight: 700, color: 'white', marginBottom: '4px' }}>
+                        Total: ₹{order.totalAmount}
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        Ordered: {new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                      {order.status !== 'CANCELLED' && (
+                        <button
+                          onClick={() => handleCancelOrder(order.orderId)}
+                          style={{
+                            marginTop: '8px',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                            borderRadius: '8px',
+                            padding: '6px 12px',
+                            color: '#fca5a5',
+                            fontSize: '12px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            transition: 'var(--transition-fast)'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                          }}
+                        >
+                          Cancel Order
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : currentTab === 'payments' ? (
+          <div style={{ animation: 'fade-in 0.4s ease-out' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <div>
+                <h2 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '6px', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
+                  Payment History
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                  View details of all your past transactions and payments.
+                </p>
+              </div>
+              <button
+                onClick={() => setCurrentTab('products')}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-card)',
+                  borderRadius: '30px',
+                  padding: '8px 16px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'var(--transition-fast)'
+                }}
+              >
+                Back to Shop
+              </button>
+            </div>
+
+            {paymentsLoading ? (
+              <div style={{ textAlign: 'center', padding: '64px 24px' }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  border: '3px solid rgba(139, 92, 246, 0.1)',
+                  borderTop: '3px solid var(--primary-500)',
+                  borderRadius: '50%',
+                  margin: '0 auto 16px',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>Loading transaction history...</p>
+              </div>
+            ) : paymentsError ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '32px 24px',
+                background: 'rgba(239, 68, 68, 0.05)',
+                border: '1px solid rgba(239, 68, 68, 0.15)',
+                borderRadius: '16px',
+                maxWidth: '480px',
+                margin: '0 auto'
+              }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                  Could not fetch payments history. ({paymentsError})
+                </p>
+              </div>
+            ) : payments.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '64px 24px',
+                background: 'rgba(255, 255, 255, 0.01)',
+                border: '1px dashed var(--border-card)',
+                borderRadius: '24px'
+              }}>
+                <ShoppingBag size={48} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
+                <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>No payments recorded</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', maxWidth: '360px', margin: '0 auto' }}>
+                  You haven't made any payments yet. Go to your orders to make a payment!
+                </p>
+                <button
+                  onClick={() => setCurrentTab('orders')}
+                  style={{
+                    marginTop: '16px',
+                    background: 'var(--primary-600)',
+                    border: 'none',
+                    color: 'white',
+                    padding: '10px 20px',
+                    borderRadius: '30px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    transition: 'var(--transition-fast)'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.background = 'var(--primary-700)'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'var(--primary-600)'}
+                >
+                  View My Orders
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {payments.map((payment: any) => (
+                  <div key={payment.id} style={{
+                    background: 'rgba(15, 12, 30, 0.4)',
+                    border: '1px solid var(--border-card)',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: 'white' }}>
+                          Transaction ID: {payment.transactionId || `TXN-${payment.id}`}
+                        </span>
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '3px 8px',
+                          borderRadius: '12px',
+                          background: payment.paymentStatus === 'SUCCESS' ? 'rgba(16, 185, 129, 0.15)' : payment.paymentStatus === 'PENDING' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                          color: payment.paymentStatus === 'SUCCESS' ? '#34d399' : payment.paymentStatus === 'PENDING' ? '#fbbf24' : '#f87171',
+                          textTransform: 'uppercase'
+                        }}>
+                          {payment.paymentStatus}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                        Order ID: <strong style={{ color: 'white' }}>#{payment.orderId}</strong> | Payment Method: <strong>{payment.paymentMethod}</strong>
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        Status of Order: <span style={{ color: 'var(--primary-300)' }}>{payment.orderStatus}</span>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '20px', fontWeight: 700, color: '#34d399', marginBottom: '4px' }}>
+                        ₹{payment.amount}
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        Date: {new Date(payment.createdAt).toLocaleDateString()} {new Date(payment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         ) : currentTab === 'overview' ? (
           <div style={{ animation: 'fade-in 0.4s ease-out' }}>
             <h2 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '6px', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
@@ -1039,6 +1618,246 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
           </>
         )}
       </div>
+
+      {/* Cart Drawer */}
+      {showCartDrawer && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 1050,
+          display: 'flex',
+          justifyContent: 'flex-end',
+          animation: 'fade-in 0.2s ease-out'
+        }} onClick={() => setShowCartDrawer(false)}>
+          <div style={{
+            width: '100%',
+            maxWidth: '450px',
+            background: '#0d0a1b',
+            borderLeft: '1px solid var(--border-card)',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '-10px 0 30px rgba(0, 0, 0, 0.5)',
+            animation: 'slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+          }} onClick={(e) => e.stopPropagation()}>
+            {/* Drawer Header */}
+            <div style={{
+              padding: '24px',
+              borderBottom: '1px solid var(--border-card)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShoppingCart size={20} style={{ color: 'var(--primary-400)' }} />
+                <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, fontFamily: 'var(--font-display)' }}>Your Cart</h3>
+              </div>
+              <button 
+                onClick={() => setShowCartDrawer(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  padding: '4px'
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Drawer Body (Cart Items) */}
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}>
+              {Object.keys(cart).length === 0 ? (
+                <div style={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--text-muted)',
+                  textAlign: 'center',
+                  gap: '12px'
+                }}>
+                  <ShoppingBag size={48} />
+                  <p style={{ margin: 0, fontSize: '15px' }}>Your shopping cart is empty</p>
+                  <p style={{ margin: 0, fontSize: '13px', opacity: 0.7 }}>Add products from the store to check them out here.</p>
+                </div>
+              ) : (
+                Object.entries(cart).map(([productId, quantity]) => {
+                  const prodId = Number(productId);
+                  const product = products.find(p => p.id === prodId);
+                  if (!product) return null;
+
+                  return (
+                    <div key={prodId} style={{
+                      display: 'flex',
+                      gap: '12px',
+                      padding: '16px',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid var(--border-card)',
+                      borderRadius: '12px',
+                      alignItems: 'center'
+                    }}>
+                      {/* Image */}
+                      <div style={{
+                        width: '60px',
+                        height: '60px',
+                        borderRadius: '8px',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                        flexShrink: 0
+                      }}>
+                        {product.image ? (
+                          <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <ShoppingBag size={20} style={{ color: 'var(--text-muted)' }} />
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h5 style={{
+                          margin: '0 0 4px',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: 'var(--text-primary)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>{product.name}</h5>
+                        <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'var(--primary-300)' }}>
+                          ₹{product.price}
+                        </p>
+                      </div>
+
+                      {/* Actions/Quantity */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', padding: '2px 6px' }}>
+                          <button 
+                            onClick={() => {
+                              if (quantity > 1) {
+                                setCart(prev => ({ ...prev, [prodId]: quantity - 1 }));
+                              } else {
+                                const newCart = { ...cart };
+                                delete newCart[prodId];
+                                setCart(newCart);
+                              }
+                            }}
+                            style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                          >-</button>
+                          <span style={{ fontSize: '13px', fontWeight: 600, minWidth: '16px', textAlign: 'center' }}>{quantity}</span>
+                          <button 
+                            onClick={() => {
+                              if (quantity < product.stock) {
+                                setCart(prev => ({ ...prev, [prodId]: quantity + 1 }));
+                              } else {
+                                setToastMessage(`Only ${product.stock} items available in stock.`);
+                                setShowCartToast(true);
+                                setTimeout(() => setShowCartToast(false), 2000);
+                              }
+                            }}
+                            style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                          >+</button>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            const newCart = { ...cart };
+                            delete newCart[prodId];
+                            setCart(newCart);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#ef4444',
+                            fontSize: '11px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            padding: 0
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Drawer Footer */}
+            {Object.keys(cart).length > 0 && (
+              <div style={{
+                padding: '24px',
+                borderTop: '1px solid var(--border-card)',
+                background: 'rgba(15, 12, 30, 0.6)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Subtotal</span>
+                  <span style={{ fontSize: '20px', fontWeight: 700, color: 'white' }}>
+                    ₹{Object.entries(cart).reduce((sum, [productId, quantity]) => {
+                      const product = products.find(p => p.id === Number(productId));
+                      return sum + (product ? product.price * quantity : 0);
+                    }, 0)}
+                  </span>
+                </div>
+                <button
+                  disabled={placingOrder}
+                  onClick={handleCheckout}
+                  className="btn-primary"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  {placingOrder ? (
+                    <div style={{
+                      width: '18px',
+                      height: '18px',
+                      border: '2px solid rgba(255,255,255,0.2)',
+                      borderTop: '2px solid white',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                  ) : (
+                    <>
+                      <Check size={16} />
+                      <span>Place Order</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
