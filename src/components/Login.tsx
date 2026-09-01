@@ -142,7 +142,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigateToRegister, onNavigateTo
         <AlertCircle size={18} style={{ color: '#fbbf24', flexShrink: 0, marginTop: '2px' }} />
         <div style={{ fontSize: '12px', color: '#f59e0b', lineHeight: '1.5', width: '100%' }}>
           <strong style={{ display: 'block', marginBottom: '2px', color: '#fbbf24' }}>System Notice</strong>
-          <span>The backend API is hosted on a free instance. If it was idle, it may take <strong>10 to 15 minutes</strong> to spin up and respond. Thank you for your patience!</span>
+          <span>The backend may take a few minutes to respond after a period of inactivity. Once active, the application should respond normally.</span>
           {isWaking && (
             <div style={{
               display: 'flex',
