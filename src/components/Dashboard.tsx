@@ -1,23 +1,26 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ShoppingCart, LogOut, Tag, Check, ShoppingBag, X, Users, LayoutDashboard } from 'lucide-react';
+import { 
+  Search, 
+  ShoppingCart, 
+  LogOut, 
+  Tag, 
+  Check, 
+  ShoppingBag, 
+  X, 
+  Users, 
+  LayoutDashboard, 
+  Menu, 
+  User, 
+  CreditCard, 
+  Package, 
+  ChevronRight, 
+  ShieldCheck 
+} from 'lucide-react';
 import { Profile } from './Profile';
 import { UsersList } from './UsersList';
 import { CatalogManagement } from './CatalogManagement';
 import { api } from '../services/api';
 
-// interface Product {
-//   id: number;
-//   title: string;
-//   category: string;
-//   price: number;
-//   originalPrice: number;
-//   rating: number;
-//   reviewsCount: number;
-//   image: string;
-//   badge?: string;
-//   description: string;
-//   isAssured?: boolean;
-// }
 interface Product{
   id: number;
   name: string;
@@ -57,6 +60,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
   const [toastMessage, setToastMessage] = useState('');
   const [currentTab, setCurrentTab] = useState<'products' | 'profile' | 'users' | 'catalog' | 'overview' | 'orders' | 'payments'>('products');
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   
   // Cart & Order states
   const [showCartDrawer, setShowCartDrawer] = useState(false);
@@ -172,6 +177,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
     setTimeout(() => {
       setShowCartToast(false);
     }, 2500);
+  };
+
+  const handleNavClick = (tab: 'products' | 'profile' | 'users' | 'catalog' | 'overview' | 'orders' | 'payments') => {
+    setCurrentTab(tab);
+    setMobileMenuOpen(false);
   };
 
   useEffect(() => {
@@ -307,7 +317,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
   const totalCartItems = Object.values(cart).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '0 16px 48px' }}>
+    <div className="dashboard-wrapper">
       {/* Toast Alert */}
       {showCartToast && (
         <div style={{
@@ -335,388 +345,815 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
         </div>
       )}
 
-      {/* Navigation Search Bar (Amazon / Flipkart layout style) */}
-      <nav style={{
-        background: 'rgba(15, 12, 30, 0.7)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid var(--border-card)',
-        borderRadius: '20px',
-        padding: '16px 24px',
-        marginTop: '24px',
-        marginBottom: '32px',
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '16px',
-        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.4)'
-      }}>
-        {/* Logo Section */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(139, 92, 246, 0.3)'
-          }}>
-            <ShoppingBag style={{ color: 'white', width: '20px', height: '20px' }} />
-          </div>
-          <span style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 800,
-            fontSize: '22px',
-            letterSpacing: '-0.02em',
-            background: 'linear-gradient(to right, #ffffff, var(--primary-300))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            ShopSphere
-          </span>
-        </div>
-
-        {/* Search Input Container */}
-        <div style={{
-          position: 'relative',
-          flex: '1 1 350px',
-          maxWidth: '500px',
-          display: 'flex',
-          alignItems: 'center'
-        }}>
-          <Search style={{
-            position: 'absolute',
-            left: '16px',
-            color: 'var(--text-muted)',
-            pointerEvents: 'none'
-          }} size={18} />
-          <input
-            type="text"
-            placeholder="Search products, brands, or categories..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid var(--border-card)',
-              borderRadius: '30px',
-              padding: '12px 20px 12px 48px',
-              fontSize: '14px',
-              color: 'var(--text-primary)',
-              outline: 'none',
-              transition: 'var(--transition-smooth)'
-            }}
-            className="form-input"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              style={{
-                position: 'absolute',
-                right: '16px',
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer'
-              }}
-            >
-              <X size={16} />
-            </button>
-          )}
-        </div>
-
-        {/* Right Nav Utilities */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          {/* User profile identifier */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }} className="d-sm-flex">
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Signed in as</span>
-            <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--primary-300)' }}>
-              {userEmail.length > 20 ? `${userEmail.slice(0, 18)}...` : userEmail}
-            </span>
-          </div>
-
-          {/* Shop Navigation Button */}
-          {userRole !== 'ADMIN' && currentTab !== 'products' && (
-            <button
-              onClick={() => setCurrentTab('products')}
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              Shop
-            </button>
-          )}
-
-          {/* My Orders Button */}
-          {userRole !== 'ADMIN' && (
-            <button
-              onClick={() => setCurrentTab('orders')}
-              style={{
-                background: currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              My Orders
-            </button>
-          )}
-
-          {/* My Payments Button */}
-          {userRole !== 'ADMIN' && (
-            <button
-              onClick={() => setCurrentTab('payments')}
-              style={{
-                background: currentTab === 'payments' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = currentTab === 'payments' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = currentTab === 'payments' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              My Payments
-            </button>
-          )}
-
-          {/* Overview Navigation Button (Admin Only) */}
-          {userRole === 'ADMIN' && (
-            <button
-              onClick={() => setCurrentTab('overview')}
-              style={{
-                background: currentTab === 'overview' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = currentTab === 'overview' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = currentTab === 'overview' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              <LayoutDashboard size={14} />
-              <span>Overview</span>
-            </button>
-          )}
-
-          {/* Catalog Management Button (Admin Only) */}
-          {userRole === 'ADMIN' && (
-            <button
-              onClick={() => setCurrentTab('catalog')}
-              style={{
-                background: currentTab === 'catalog' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = currentTab === 'catalog' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = currentTab === 'catalog' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              <ShoppingBag size={14} />
-              <span>Manage Catalog</span>
-            </button>
-          )}
-
-          {/* Users Navigation Button (Admin Only) */}
-          {userRole === 'ADMIN' && (
-            <button
-              onClick={() => setCurrentTab('users')}
-              style={{
-                background: currentTab === 'users' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = currentTab === 'users' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = currentTab === 'users' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              <Users size={14} />
-              <span>Users</span>
-            </button>
-          )}
-
-          {/* Orders Navigation Button (Admin Only) */}
-          {userRole === 'ADMIN' && (
-            <button
-              onClick={() => setCurrentTab('orders')}
-              style={{
-                background: currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              <ShoppingCart size={14} />
-              <span>Orders</span>
-            </button>
-          )}
-
-          {/* Profile Navigation Button */}
-          <button
-            onClick={() => setCurrentTab('profile')}
-            style={{
-              background: currentTab === 'profile' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid var(--border-card)',
-              borderRadius: '30px',
-              padding: '8px 16px',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              transition: 'var(--transition-fast)'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.background = currentTab === 'profile' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = currentTab === 'profile' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-            }}
+      {/* Responsive Navigation Bar */}
+      <nav className="navbar-container">
+        {/* Main Header Row */}
+        <div className="navbar-main-row">
+          {/* Logo Section */}
+          <button 
+            onClick={() => handleNavClick(userRole === 'ADMIN' ? 'overview' : 'products')}
+            className="navbar-logo-btn"
           >
-            Profile
+            <div className="navbar-logo-icon">
+              <ShoppingBag style={{ color: 'white', width: '20px', height: '20px' }} />
+            </div>
+            <span className="navbar-logo-text">
+              ShopSphere
+            </span>
           </button>
 
-          {/* Cart Icon */}
-          {userRole !== 'ADMIN' && (
-            <div 
-              onClick={() => setShowCartDrawer(true)}
-              style={{ position: 'relative', cursor: 'pointer', padding: '6px' }}
-            >
-              <ShoppingCart size={22} style={{ color: 'var(--text-primary)', opacity: 0.9 }} />
-              {totalCartItems > 0 && (
-                <span style={{
+          {/* Desktop Search Input Container */}
+          <div className="navbar-desktop-search">
+            <Search style={{
+              position: 'absolute',
+              left: '16px',
+              color: 'var(--text-muted)',
+              pointerEvents: 'none'
+            }} size={18} />
+            <input
+              type="text"
+              placeholder="Search products, brands, or categories..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid var(--border-card)',
+                borderRadius: '30px',
+                padding: '12px 42px 12px 48px',
+                fontSize: '14px',
+                color: 'var(--text-primary)',
+                outline: 'none',
+                transition: 'var(--transition-smooth)'
+              }}
+              className="form-input"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                style={{
                   position: 'absolute',
-                  top: '-2px',
-                  right: '-2px',
-                  background: 'var(--primary-500)',
+                  right: '16px',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          {/* Desktop Right Nav Utilities */}
+          <div className="navbar-desktop-nav">
+            {/* User profile identifier */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: '4px' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Signed in as</span>
+              <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--primary-300)' }}>
+                {userEmail.length > 18 ? `${userEmail.slice(0, 16)}...` : userEmail}
+              </span>
+            </div>
+
+            {/* Shop Navigation Button */}
+            {userRole !== 'ADMIN' && currentTab !== 'products' && (
+              <button
+                onClick={() => handleNavClick('products')}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-card)',
+                  borderRadius: '30px',
+                  padding: '8px 16px',
                   color: 'white',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                }}
+              >
+                Shop
+              </button>
+            )}
+
+            {/* My Orders Button */}
+            {userRole !== 'ADMIN' && (
+              <button
+                onClick={() => handleNavClick('orders')}
+                style={{
+                  background: currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-card)',
+                  borderRadius: '30px',
+                  padding: '8px 16px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+                }}
+              >
+                My Orders
+              </button>
+            )}
+
+            {/* My Payments Button */}
+            {userRole !== 'ADMIN' && (
+              <button
+                onClick={() => handleNavClick('payments')}
+                style={{
+                  background: currentTab === 'payments' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-card)',
+                  borderRadius: '30px',
+                  padding: '8px 16px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = currentTab === 'payments' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = currentTab === 'payments' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+                }}
+              >
+                My Payments
+              </button>
+            )}
+
+            {/* Overview Navigation Button (Admin Only) */}
+            {userRole === 'ADMIN' && (
+              <button
+                onClick={() => handleNavClick('overview')}
+                style={{
+                  background: currentTab === 'overview' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-card)',
+                  borderRadius: '30px',
+                  padding: '8px 16px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = currentTab === 'overview' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = currentTab === 'overview' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+                }}
+              >
+                <LayoutDashboard size={14} />
+                <span>Overview</span>
+              </button>
+            )}
+
+            {/* Catalog Management Button (Admin Only) */}
+            {userRole === 'ADMIN' && (
+              <button
+                onClick={() => handleNavClick('catalog')}
+                style={{
+                  background: currentTab === 'catalog' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-card)',
+                  borderRadius: '30px',
+                  padding: '8px 16px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = currentTab === 'catalog' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = currentTab === 'catalog' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+                }}
+              >
+                <ShoppingBag size={14} />
+                <span>Manage Catalog</span>
+              </button>
+            )}
+
+            {/* Users Navigation Button (Admin Only) */}
+            {userRole === 'ADMIN' && (
+              <button
+                onClick={() => handleNavClick('users')}
+                style={{
+                  background: currentTab === 'users' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-card)',
+                  borderRadius: '30px',
+                  padding: '8px 16px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = currentTab === 'users' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = currentTab === 'users' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+                }}
+              >
+                <Users size={14} />
+                <span>Users</span>
+              </button>
+            )}
+
+            {/* Orders Navigation Button (Admin Only) */}
+            {userRole === 'ADMIN' && (
+              <button
+                onClick={() => handleNavClick('orders')}
+                style={{
+                  background: currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-card)',
+                  borderRadius: '30px',
+                  padding: '8px 16px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+                }}
+              >
+                <Package size={14} />
+                <span>Orders</span>
+              </button>
+            )}
+
+            {/* Profile Navigation Button */}
+            <button
+              onClick={() => handleNavClick('profile')}
+              style={{
+                background: currentTab === 'profile' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-card)',
+                borderRadius: '30px',
+                padding: '8px 16px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = currentTab === 'profile' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = currentTab === 'profile' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
+              }}
+            >
+              Profile
+            </button>
+
+            {/* Cart Icon */}
+            {userRole !== 'ADMIN' && (
+              <div 
+                onClick={() => setShowCartDrawer(true)}
+                style={{ position: 'relative', cursor: 'pointer', padding: '6px' }}
+                title="Shopping Cart"
+              >
+                <ShoppingCart size={22} style={{ color: 'var(--text-primary)', opacity: 0.9 }} />
+                {totalCartItems > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-2px',
+                    right: '-2px',
+                    background: 'var(--primary-500)',
+                    color: 'white',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 0 8px rgba(139, 92, 246, 0.6)',
+                    animation: 'scale-up 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+                  }}>
+                    {totalCartItems}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Logout Button */}
+            <button
+              onClick={onLogout}
+              style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                borderRadius: '30px',
+                padding: '8px 16px',
+                color: '#fca5a5',
+                fontSize: '14px',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+              }}
+            >
+              <LogOut size={16} />
+              <span>Sign Out</span>
+            </button>
+          </div>
+
+          {/* Mobile Right Action Controls */}
+          <div className="navbar-mobile-actions">
+            {/* Mobile Search Toggle */}
+            <button 
+              onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+              className={`navbar-icon-btn ${mobileSearchOpen ? 'active' : ''}`}
+              aria-label="Toggle search"
+            >
+              <Search size={18} />
+            </button>
+
+            {/* Mobile Cart Icon */}
+            {userRole !== 'ADMIN' && (
+              <button 
+                onClick={() => setShowCartDrawer(true)}
+                className="navbar-icon-btn"
+                aria-label="View shopping cart"
+              >
+                <ShoppingCart size={18} />
+                {totalCartItems > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    background: 'var(--primary-500)',
+                    color: 'white',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    width: '17px',
+                    height: '17px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 0 6px rgba(139, 92, 246, 0.8)'
+                  }}>
+                    {totalCartItems}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {/* Mobile Menu Hamburger Toggle */}
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={`navbar-icon-btn ${mobileMenuOpen ? 'active' : ''}`}
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Search Row (Expandable on small screens) */}
+        {mobileSearchOpen && (
+          <div className="navbar-mobile-search">
+            <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center' }}>
+              <Search style={{
+                position: 'absolute',
+                left: '14px',
+                color: 'var(--text-muted)',
+                pointerEvents: 'none'
+              }} size={16} />
+              <input
+                type="text"
+                placeholder="Search products, brands, or categories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+                style={{
+                  width: '100%',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid var(--border-card)',
+                  borderRadius: '24px',
+                  padding: '10px 38px 10px 40px',
+                  fontSize: '13px',
+                  color: 'var(--text-primary)',
+                  outline: 'none',
+                  transition: 'var(--transition-smooth)'
+                }}
+                className="form-input"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <X size={15} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </nav>
+
+      {/* Mobile Navigation Drawer Modal */}
+      {mobileMenuOpen && (
+        <>
+          <div 
+            className="navbar-drawer-backdrop" 
+            onClick={() => setMobileMenuOpen(false)} 
+          />
+          <div className="navbar-mobile-drawer" onClick={(e) => e.stopPropagation()}>
+            {/* Drawer Header with Close button */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="navbar-logo-icon" style={{ width: '32px', height: '32px' }}>
+                  <ShoppingBag size={16} />
+                </div>
+                <span className="navbar-logo-text" style={{ fontSize: '18px' }}>ShopSphere</span>
+              </div>
+              <button 
+                onClick={() => setMobileMenuOpen(false)}
+                className="navbar-icon-btn"
+                style={{ width: '36px', height: '36px' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* User Info Card */}
+            <div className="drawer-user-card">
+              <div className="drawer-user-avatar">
+                {userEmail ? userEmail.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <div className="drawer-user-info">
+                <div className="drawer-user-email" title={userEmail}>
+                  {userEmail}
+                </div>
+                <span 
+                  className="drawer-user-role" 
+                  style={{
+                    background: userRole === 'ADMIN' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(16, 185, 129, 0.15)',
+                    color: userRole === 'ADMIN' ? '#c4b5fd' : '#6ee7b7',
+                    border: `1px solid ${userRole === 'ADMIN' ? 'rgba(139, 92, 246, 0.3)' : 'rgba(16, 185, 129, 0.25)'}`
+                  }}
+                >
+                  <ShieldCheck size={12} />
+                  {userRole === 'ADMIN' ? 'Admin Access' : 'Verified Customer'}
+                </span>
+              </div>
+            </div>
+
+            {/* Navigation List */}
+            <div className="drawer-nav-list">
+              <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '4px' }}>
+                Navigation
+              </span>
+
+              {userRole !== 'ADMIN' ? (
+                <>
+                  <button 
+                    onClick={() => handleNavClick('products')}
+                    className={`drawer-nav-item ${currentTab === 'products' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <ShoppingBag size={18} style={{ color: currentTab === 'products' ? 'var(--primary-300)' : 'var(--text-muted)' }} />
+                      <span>Storefront & Catalog</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => handleNavClick('orders')}
+                    className={`drawer-nav-item ${currentTab === 'orders' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <Package size={18} style={{ color: currentTab === 'orders' ? 'var(--primary-300)' : 'var(--text-muted)' }} />
+                      <span>My Orders</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => handleNavClick('payments')}
+                    className={`drawer-nav-item ${currentTab === 'payments' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <CreditCard size={18} style={{ color: currentTab === 'payments' ? 'var(--primary-300)' : 'var(--text-muted)' }} />
+                      <span>My Payments</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => handleNavClick('profile')}
+                    className={`drawer-nav-item ${currentTab === 'profile' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <User size={18} style={{ color: currentTab === 'profile' ? 'var(--primary-300)' : 'var(--text-muted)' }} />
+                      <span>My Profile & Settings</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setShowCartDrawer(true);
+                    }}
+                    className="drawer-nav-item"
+                    style={{
+                      background: 'rgba(139, 92, 246, 0.08)',
+                      borderColor: 'rgba(139, 92, 246, 0.2)'
+                    }}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <ShoppingCart size={18} style={{ color: 'var(--primary-400)' }} />
+                      <span style={{ color: 'white', fontWeight: 600 }}>Shopping Cart</span>
+                    </div>
+                    {totalCartItems > 0 && (
+                      <span style={{
+                        background: 'var(--primary-500)',
+                        color: 'white',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: '12px'
+                      }}>
+                        {totalCartItems} items
+                      </span>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => handleNavClick('overview')}
+                    className={`drawer-nav-item ${currentTab === 'overview' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <LayoutDashboard size={18} style={{ color: currentTab === 'overview' ? 'var(--primary-300)' : 'var(--text-muted)' }} />
+                      <span>Overview Dashboard</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => handleNavClick('catalog')}
+                    className={`drawer-nav-item ${currentTab === 'catalog' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <ShoppingBag size={18} style={{ color: currentTab === 'catalog' ? 'var(--primary-300)' : 'var(--text-muted)' }} />
+                      <span>Manage Catalog (Products & Categories)</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => handleNavClick('users')}
+                    className={`drawer-nav-item ${currentTab === 'users' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <Users size={18} style={{ color: currentTab === 'users' ? 'var(--primary-300)' : 'var(--text-muted)' }} />
+                      <span>User Management</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => handleNavClick('orders')}
+                    className={`drawer-nav-item ${currentTab === 'orders' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <Package size={18} style={{ color: currentTab === 'orders' ? 'var(--primary-300)' : 'var(--text-muted)' }} />
+                      <span>Order Management</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => handleNavClick('profile')}
+                    className={`drawer-nav-item ${currentTab === 'profile' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <User size={18} style={{ color: currentTab === 'profile' ? 'var(--primary-300)' : 'var(--text-muted)' }} />
+                      <span>Admin Profile</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Logout Action */}
+            <div style={{ paddingTop: '8px', borderTop: '1px solid var(--border-card)' }}>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onLogout();
+                }}
+                style={{
+                  width: '100%',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  borderRadius: '14px',
+                  padding: '12px 16px',
+                  color: '#fca5a5',
+                  fontSize: '14px',
+                  fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 0 8px rgba(139, 92, 246, 0.6)',
-                  animation: 'scale-up 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-                }}>
-                  {totalCartItems}
-                </span>
-              )}
+                  gap: '8px',
+                  cursor: 'pointer',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                }}
+              >
+                <LogOut size={16} />
+                <span>Sign Out of Account</span>
+              </button>
             </div>
-          )}
+          </div>
+        </>
+      )}
 
-          {/* Logout Button */}
-          <button
-            onClick={onLogout}
-            style={{
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              borderRadius: '30px',
-              padding: '8px 16px',
-              color: '#fca5a5',
-              fontSize: '14px',
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer',
-              transition: 'var(--transition-fast)'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-            }}
-          >
-            <LogOut size={16} />
-            <span>Sign Out</span>
-          </button>
+      {/* Mobile Bottom Navigation Bar (< 768px) */}
+      <nav className="mobile-bottom-nav" aria-label="Mobile Navigation">
+        <div className="mobile-bottom-nav-inner">
+          {userRole !== 'ADMIN' ? (
+            <>
+              <button
+                onClick={() => handleNavClick('products')}
+                className={`mobile-bottom-tab ${currentTab === 'products' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <ShoppingBag size={18} />
+                </div>
+                <span>Shop</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('orders')}
+                className={`mobile-bottom-tab ${currentTab === 'orders' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <Package size={18} />
+                </div>
+                <span>Orders</span>
+              </button>
+
+              <button
+                onClick={() => setShowCartDrawer(true)}
+                className="mobile-bottom-tab"
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <ShoppingCart size={18} />
+                  {totalCartItems > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-2px',
+                      right: '-2px',
+                      background: 'var(--primary-500)',
+                      color: 'white',
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      width: '15px',
+                      height: '15px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      {totalCartItems}
+                    </span>
+                  )}
+                </div>
+                <span>Cart</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('payments')}
+                className={`mobile-bottom-tab ${currentTab === 'payments' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <CreditCard size={18} />
+                </div>
+                <span>Payments</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('profile')}
+                className={`mobile-bottom-tab ${currentTab === 'profile' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <User size={18} />
+                </div>
+                <span>Profile</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => handleNavClick('overview')}
+                className={`mobile-bottom-tab ${currentTab === 'overview' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <LayoutDashboard size={18} />
+                </div>
+                <span>Overview</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('catalog')}
+                className={`mobile-bottom-tab ${currentTab === 'catalog' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <ShoppingBag size={18} />
+                </div>
+                <span>Catalog</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('users')}
+                className={`mobile-bottom-tab ${currentTab === 'users' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <Users size={18} />
+                </div>
+                <span>Users</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('orders')}
+                className={`mobile-bottom-tab ${currentTab === 'orders' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <Package size={18} />
+                </div>
+                <span>Orders</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('profile')}
+                className={`mobile-bottom-tab ${currentTab === 'profile' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <User size={18} />
+                </div>
+                <span>Profile</span>
+              </button>
+            </>
+          )}
         </div>
       </nav>
 

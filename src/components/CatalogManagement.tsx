@@ -24,7 +24,7 @@ export const CatalogManagement: React.FC<CatalogManagementProps> = ({ token, onB
         flexWrap: 'wrap',
         gap: '16px'
       }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
             onClick={() => setActiveSubTab('products')}
             style={{
