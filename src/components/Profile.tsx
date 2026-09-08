@@ -116,8 +116,6 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
     };
   }, [token]);
 
-
-
   const handleSaveChanges = async () => {
     if (!editFirstName.trim()) {
       setUpdateError('First name is required.');
@@ -145,7 +143,7 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
         setUpdateError(response.message || 'Failed to update profile.');
       }
     } catch (err: any) {
-      console.warn("API profile update failed, applying offline fallback updates:", err);
+      console.warn("API profile update fallback:", err);
       const updatedProfile = {
         ...profile!,
         firstName: payload.firstName,
@@ -166,8 +164,8 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
     return (
       <div className="glass-card" style={{ padding: '40px', textAlign: 'center', maxWidth: '600px', margin: '40px auto' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-          <div className="spinner" style={{ width: '48px', height: '48px', borderWidth: '4px' }}></div>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '16px' }}>Loading your secure profile...</p>
+          <div className="spinner" style={{ width: '40px', height: '40px', borderWidth: '3px' }}></div>
+          <p style={{ color: '#475569', fontSize: '15px', fontWeight: 500 }}>Loading your secure profile...</p>
         </div>
       </div>
     );
@@ -181,18 +179,18 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
             width: '64px',
             height: '64px',
             borderRadius: '50%',
-            background: 'rgba(239, 68, 68, 0.1)',
+            background: '#fef2f2',
             margin: '0 auto 16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            <AlertCircle style={{ color: 'var(--error)', width: '32px', height: '32px' }} />
+            <AlertCircle style={{ color: '#dc2626', width: '32px', height: '32px' }} />
           </div>
-          <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>Failed to Load Profile</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px' }}>{error || 'Unable to retrieve user details.'}</p>
+          <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Failed to Load Profile</h2>
+          <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>{error || 'Unable to retrieve user details.'}</p>
           <button onClick={onBack} className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', width: 'auto', padding: '10px 24px' }}>
-            <ArrowLeft size={16} /> Back to Products
+            <ArrowLeft size={16} /> Back to Storefront
           </button>
         </div>
       </div>
@@ -214,26 +212,34 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
               setNewPassword('');
             }}
             style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              display: 'flex',
+              background: '#ffffff',
+              border: '1.5px solid #cbd5e1',
+              color: 'var(--primary-600)',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
               cursor: 'pointer',
-              fontSize: '14px',
-              padding: '4px 8px',
-              borderRadius: '6px',
+              fontSize: '13px',
+              fontWeight: 600,
+              padding: '6px 14px',
+              borderRadius: '10px',
               transition: 'var(--transition-fast)'
             }}
-            className="link"
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = '#f8fafc';
+              e.currentTarget.style.borderColor = 'var(--primary-500)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = '#ffffff';
+              e.currentTarget.style.borderColor = '#cbd5e1';
+            }}
           >
             <ArrowLeft size={16} /> Back to Profile
           </button>
         </div>
 
-        <h1 className="title" style={{ marginBottom: '8px', fontSize: '24px' }}>Change Password</h1>
-        <p className="subtitle" style={{ marginBottom: '24px' }}>Update your security credentials</p>
+        <h1 className="title" style={{ marginBottom: '6px', fontSize: '24px', color: '#0f172a' }}>Change Password</h1>
+        <p className="subtitle" style={{ marginBottom: '24px', color: '#475569' }}>Update your security credentials</p>
 
         {passwordError && (
           <div className="alert alert-error" style={{ marginBottom: '20px' }}>
@@ -253,7 +259,7 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
             {/* Old Password */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="oldPassword" style={{ display: 'block', marginBottom: '8px' }}>
+              <label className="form-label" htmlFor="oldPassword" style={{ display: 'block', marginBottom: '8px', color: '#1e293b', fontWeight: 600 }}>
                 Current Password
               </label>
               <div className="form-input-wrapper">
@@ -281,7 +287,7 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
 
             {/* New Password */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="newPassword" style={{ display: 'block', marginBottom: '8px' }}>
+              <label className="form-label" htmlFor="newPassword" style={{ display: 'block', marginBottom: '8px', color: '#1e293b', fontWeight: 600 }}>
                 New Password
               </label>
               <div className="form-input-wrapper">
@@ -328,25 +334,33 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
   return (
     <div className="glass-card" style={{ maxWidth: '700px', margin: '0 auto', padding: '32px' }}>
       {/* Header section with back navigation */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
         <button
           onClick={onBack}
           style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-secondary)',
-            display: 'flex',
+            background: '#ffffff',
+            border: '1.5px solid #cbd5e1',
+            color: 'var(--primary-600)',
+            display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
             cursor: 'pointer',
-            fontSize: '14px',
-            padding: '6px 12px',
-            borderRadius: '20px',
+            fontSize: '13px',
+            fontWeight: 600,
+            padding: '6px 14px',
+            borderRadius: '10px',
             transition: 'var(--transition-fast)',
           }}
-          className="link"
+          onMouseOver={(e) => {
+            e.currentTarget.style.background = '#f8fafc';
+            e.currentTarget.style.borderColor = 'var(--primary-500)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.background = '#ffffff';
+            e.currentTarget.style.borderColor = '#cbd5e1';
+          }}
         >
-          <ArrowLeft size={16} /> Back to Products
+          <ArrowLeft size={16} /> Back to Storefront
         </button>
       </div>
 
@@ -355,49 +369,49 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
         display: 'flex',
         alignItems: 'center',
         gap: '24px',
-        background: 'rgba(255, 255, 255, 0.02)',
-        border: '1px solid var(--border-card)',
+        background: '#f8fafc',
+        border: '1px solid #e2e8f0',
         borderRadius: '20px',
         padding: '24px',
         marginBottom: '32px',
         flexWrap: 'wrap'
       }}>
         <div style={{
-          width: '80px',
-          height: '80px',
-          borderRadius: '24px',
-          background: 'linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%)',
+          width: '76px',
+          height: '76px',
+          borderRadius: '20px',
+          background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '28px',
+          fontSize: '26px',
           fontWeight: 700,
-          color: 'white',
-          boxShadow: '0 8px 24px rgba(139, 92, 246, 0.35)',
-          textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+          color: '#ffffff',
+          boxShadow: '0 8px 20px rgba(79, 70, 229, 0.3)'
         }}>
           {userInitials}
         </div>
         <div style={{ flex: 1, minWidth: '200px' }}>
-          <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '6px', color: '#0f172a' }}>
             {profile.firstName} {profile.lastName}
           </h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', fontSize: '13px', fontWeight: 500 }}>
             <span style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
               padding: '2px 8px',
-              background: 'rgba(255, 255, 255, 0.05)',
+              background: '#ede9fe',
+              border: '1px solid #c7d2fe',
               borderRadius: '6px',
-              fontWeight: 500,
-              fontSize: '12px',
-              color: 'var(--primary-300)'
+              fontWeight: 700,
+              fontSize: '11px',
+              color: '#4338ca'
             }}>
               <Shield size={12} /> {profile.role}
             </span>
             <span>•</span>
-            <span>ID: {profile.id}</span>
+            <span>User ID: #{profile.id}</span>
           </div>
         </div>
       </div>
@@ -418,7 +432,7 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
 
       {/* Grid of Profile Details */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+        <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
           {isEditing ? 'Edit Profile Details' : 'Personal Details'}
         </h3>
         {!isEditing && (
@@ -426,42 +440,52 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
             <button
               onClick={() => setView('password')}
               style={{
-                background: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid var(--border-card)',
-                color: 'var(--text-secondary)',
-                borderRadius: '20px',
+                background: '#ffffff',
+                border: '1.5px solid #cbd5e1',
+                color: '#334155',
+                borderRadius: '10px',
                 padding: '6px 14px',
                 fontSize: '13px',
-                fontWeight: 500,
+                fontWeight: 600,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
                 transition: 'var(--transition-fast)'
               }}
-              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
-              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = '#f8fafc';
+                e.currentTarget.style.borderColor = '#94a3b8';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = '#ffffff';
+                e.currentTarget.style.borderColor = '#cbd5e1';
+              }}
             >
               <Lock size={14} /> Change Password
             </button>
             <button
               onClick={() => setIsEditing(true)}
               style={{
-                background: 'rgba(139, 92, 246, 0.1)',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
-                color: 'var(--primary-300)',
-                borderRadius: '20px',
+                background: '#ede9fe',
+                border: '1.5px solid #c7d2fe',
+                color: '#4338ca',
+                borderRadius: '10px',
                 padding: '6px 14px',
                 fontSize: '13px',
-                fontWeight: 500,
+                fontWeight: 600,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
                 transition: 'var(--transition-fast)'
               }}
-              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)'}
-              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)'}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = '#ddd6fe';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = '#ede9fe';
+              }}
             >
               <Edit size={14} /> Edit Profile
             </button>
@@ -476,67 +500,67 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
         marginBottom: '32px'
       }}>
         {/* First Name */}
-        <div style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-card)', padding: '16px', borderRadius: '12px', display: 'flex', gap: '14px', alignItems: 'center' }}>
-          <UserIcon style={{ color: 'var(--primary-400)', flexShrink: 0 }} size={20} />
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '16px', borderRadius: '12px', display: 'flex', gap: '14px', alignItems: 'center' }}>
+          <UserIcon style={{ color: 'var(--primary-600)', flexShrink: 0 }} size={20} />
           <div style={{ flex: 1 }}>
-            <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: isEditing ? '4px' : '0' }}>First Name</span>
+            <span style={{ display: 'block', fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, marginBottom: isEditing ? '4px' : '0' }}>First Name</span>
             {isEditing ? (
               <input
                 type="text"
                 value={editFirstName}
                 onChange={(e) => setEditFirstName(e.target.value)}
-                style={{ width: '100%', padding: '6px 10px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-card)', borderRadius: '6px', color: 'white', fontSize: '14px', outline: 'none' }}
+                style={{ width: '100%', padding: '6px 10px', background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '6px', color: '#0f172a', fontSize: '14px', outline: 'none' }}
                 placeholder="First Name"
               />
             ) : (
-              <span style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>{profile.firstName}</span>
+              <span style={{ fontSize: '14px', color: '#0f172a', fontWeight: 600 }}>{profile.firstName}</span>
             )}
           </div>
         </div>
 
         {/* Last Name */}
-        <div style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-card)', padding: '16px', borderRadius: '12px', display: 'flex', gap: '14px', alignItems: 'center' }}>
-          <UserIcon style={{ color: 'var(--primary-400)', flexShrink: 0 }} size={20} />
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '16px', borderRadius: '12px', display: 'flex', gap: '14px', alignItems: 'center' }}>
+          <UserIcon style={{ color: 'var(--primary-600)', flexShrink: 0 }} size={20} />
           <div style={{ flex: 1 }}>
-            <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: isEditing ? '4px' : '0' }}>Last Name</span>
+            <span style={{ display: 'block', fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, marginBottom: isEditing ? '4px' : '0' }}>Last Name</span>
             {isEditing ? (
               <input
                 type="text"
                 value={editLastName}
                 onChange={(e) => setEditLastName(e.target.value)}
-                style={{ width: '100%', padding: '6px 10px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-card)', borderRadius: '6px', color: 'white', fontSize: '14px', outline: 'none' }}
+                style={{ width: '100%', padding: '6px 10px', background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '6px', color: '#0f172a', fontSize: '14px', outline: 'none' }}
                 placeholder="Last Name"
               />
             ) : (
-              <span style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>{profile.lastName}</span>
+              <span style={{ fontSize: '14px', color: '#0f172a', fontWeight: 600 }}>{profile.lastName}</span>
             )}
           </div>
         </div>
 
         {/* Email - Not Editable */}
-        <div style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-card)', padding: '16px', borderRadius: '12px', display: 'flex', gap: '14px', alignItems: 'center', opacity: isEditing ? 0.6 : 1 }}>
-          <Mail style={{ color: 'var(--primary-400)', flexShrink: 0 }} size={20} />
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '16px', borderRadius: '12px', display: 'flex', gap: '14px', alignItems: 'center', opacity: isEditing ? 0.7 : 1 }}>
+          <Mail style={{ color: 'var(--primary-600)', flexShrink: 0 }} size={20} />
           <div>
-            <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email Address (Read-Only)</span>
-            <span style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>{profile.email}</span>
+            <span style={{ display: 'block', fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Email Address (Read-Only)</span>
+            <span style={{ fontSize: '14px', color: '#0f172a', fontWeight: 600 }}>{profile.email}</span>
           </div>
         </div>
 
         {/* Phone */}
-        <div style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-card)', padding: '16px', borderRadius: '12px', display: 'flex', gap: '14px', alignItems: 'center' }}>
-          <Phone style={{ color: 'var(--primary-400)', flexShrink: 0 }} size={20} />
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '16px', borderRadius: '12px', display: 'flex', gap: '14px', alignItems: 'center' }}>
+          <Phone style={{ color: 'var(--primary-600)', flexShrink: 0 }} size={20} />
           <div style={{ flex: 1 }}>
-            <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: isEditing ? '4px' : '0' }}>Phone Number</span>
+            <span style={{ display: 'block', fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, marginBottom: isEditing ? '4px' : '0' }}>Phone Number</span>
             {isEditing ? (
               <input
                 type="text"
                 value={editPhone}
                 onChange={(e) => setEditPhone(e.target.value)}
-                style={{ width: '100%', padding: '6px 10px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-card)', borderRadius: '6px', color: 'white', fontSize: '14px', outline: 'none' }}
+                style={{ width: '100%', padding: '6px 10px', background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '6px', color: '#0f172a', fontSize: '14px', outline: 'none' }}
                 placeholder="Phone Number"
               />
             ) : (
-              <span style={{ fontSize: '14px', color: profile.phone ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 500 }}>
+              <span style={{ fontSize: '14px', color: profile.phone ? '#0f172a' : '#94a3b8', fontWeight: 600 }}>
                 {profile.phone || 'Not provided'}
               </span>
             )}
@@ -544,24 +568,24 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
         </div>
 
         {/* Time Zone */}
-        <div style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-card)', padding: '16px', borderRadius: '12px', display: 'flex', gap: '14px', alignItems: 'center' }}>
-          <Globe style={{ color: 'var(--primary-400)', flexShrink: 0 }} size={20} />
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '16px', borderRadius: '12px', display: 'flex', gap: '14px', alignItems: 'center' }}>
+          <Globe style={{ color: 'var(--primary-600)', flexShrink: 0 }} size={20} />
           <div style={{ flex: 1 }}>
-            <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: isEditing ? '4px' : '0' }}>Time Zone</span>
+            <span style={{ display: 'block', fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, marginBottom: isEditing ? '4px' : '0' }}>Time Zone</span>
             {isEditing ? (
               <select
                 value={editTimeZone}
                 onChange={(e) => setEditTimeZone(e.target.value)}
-                style={{ width: '100%', padding: '6px 10px', background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '6px', color: 'white', fontSize: '14px', outline: 'none', cursor: 'pointer' }}
+                style={{ width: '100%', padding: '6px 10px', background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '6px', color: '#0f172a', fontSize: '14px', outline: 'none', cursor: 'pointer' }}
               >
                 {TIMEZONES.map((tz) => (
-                  <option key={tz} value={tz} style={{ background: '#1e1b4b', color: 'white' }}>
+                  <option key={tz} value={tz} style={{ background: '#ffffff', color: '#0f172a' }}>
                     {tz}
                   </option>
                 ))}
               </select>
             ) : (
-              <span style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>{profile.timeZone}</span>
+              <span style={{ fontSize: '14px', color: '#0f172a', fontWeight: 600 }}>{profile.timeZone}</span>
             )}
           </div>
         </div>
@@ -581,13 +605,13 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
             }}
             disabled={updating}
             style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid var(--border-card)',
-              color: 'var(--text-secondary)',
-              borderRadius: '20px',
+              background: '#ffffff',
+              border: '1.5px solid #cbd5e1',
+              color: '#334155',
+              borderRadius: '10px',
               padding: '8px 20px',
-              fontSize: '14px',
-              fontWeight: 500,
+              fontSize: '13px',
+              fontWeight: 600,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -601,18 +625,18 @@ export const Profile: React.FC<ProfileProps> = ({ token, onBack }) => {
             onClick={handleSaveChanges}
             disabled={updating}
             style={{
-              background: 'var(--primary-600)',
+              background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)',
               border: 'none',
-              color: 'white',
-              borderRadius: '20px',
+              color: '#ffffff',
+              borderRadius: '10px',
               padding: '8px 20px',
-              fontSize: '14px',
-              fontWeight: 500,
+              fontSize: '13px',
+              fontWeight: 600,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)',
+              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)',
               transition: 'var(--transition-fast)'
             }}
           >

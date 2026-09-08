@@ -135,43 +135,50 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
           <button
             onClick={onBack}
             style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--primary-300)',
-              fontSize: '14px',
-              fontWeight: 500,
+              background: '#ffffff',
+              border: '1.5px solid #cbd5e1',
+              color: 'var(--primary-600)',
+              fontSize: '13px',
+              fontWeight: 600,
               cursor: 'pointer',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              marginBottom: '10px',
-              padding: '4px 0',
+              marginBottom: '12px',
+              padding: '6px 14px',
+              borderRadius: '10px',
               transition: 'var(--transition-fast)'
             }}
-            onMouseOver={(e) => e.currentTarget.style.color = 'white'}
-            onMouseOut={(e) => e.currentTarget.style.color = 'var(--primary-300)'}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = '#f8fafc';
+              e.currentTarget.style.borderColor = 'var(--primary-500)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = '#ffffff';
+              e.currentTarget.style.borderColor = '#cbd5e1';
+            }}
           >
             ← Back to Storefront
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '42px',
-              height: '42px',
+              width: '44px',
+              height: '44px',
               borderRadius: '12px',
-              background: 'rgba(139, 92, 246, 0.1)',
-              border: '1px solid rgba(139, 92, 246, 0.2)',
+              background: '#ede9fe',
+              border: '1px solid #c7d2fe',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--primary-400)'
+              color: 'var(--primary-600)'
             }}>
               <Users size={22} />
             </div>
             <div>
-              <h2 style={{ fontSize: '24px', fontWeight: 700, margin: 0, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: 700, margin: 0, color: '#0f172a', fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
                 User Accounts
               </h2>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
+              <p style={{ fontSize: '13px', color: '#475569', margin: '2px 0 0 0' }}>
                 Manage and view registered user accounts on the platform
               </p>
             </div>
@@ -182,13 +189,13 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
           onClick={fetchUsers}
           disabled={loading}
           style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid var(--border-card)',
-            color: 'var(--text-primary)',
+            background: '#ffffff',
+            border: '1.5px solid #cbd5e1',
+            color: '#1e293b',
             padding: '10px 18px',
             borderRadius: '12px',
             fontSize: '13px',
-            fontWeight: 500,
+            fontWeight: 600,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -196,10 +203,16 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
             transition: 'var(--transition-fast)'
           }}
           onMouseOver={(e) => {
-            if (!loading) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+            if (!loading) {
+              e.currentTarget.style.background = '#f8fafc';
+              e.currentTarget.style.borderColor = 'var(--primary-500)';
+            }
           }}
           onMouseOut={(e) => {
-            if (!loading) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+            if (!loading) {
+              e.currentTarget.style.background = '#ffffff';
+              e.currentTarget.style.borderColor = '#cbd5e1';
+            }
           }}
         >
           <RefreshCw size={14} className={loading ? 'spin-animation' : ''} />
@@ -209,8 +222,8 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
 
       {/* Search & Filter Bar */}
       <div style={{
-        background: 'rgba(15, 12, 30, 0.4)',
-        border: '1px solid var(--border-card)',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
         borderRadius: '16px',
         padding: '16px 20px',
         marginBottom: '24px',
@@ -218,11 +231,12 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
         flexWrap: 'wrap',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '16px'
+        gap: '16px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
       }}>
         {/* Search */}
         <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: '400px' }}>
-          <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
           <input
             type="text"
             placeholder="Search by name, email, timezone..."
@@ -230,15 +244,17 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
               width: '100%',
-              background: 'rgba(255, 255, 255, 0.02)',
-              border: '1px solid var(--border-card)',
+              background: '#f8fafc',
+              border: '1.5px solid #cbd5e1',
               borderRadius: '24px',
               padding: '10px 16px 10px 42px',
               fontSize: '14px',
-              color: 'white',
+              color: '#0f172a',
               outline: 'none',
               transition: 'var(--transition-smooth)'
             }}
+            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--primary-600)'}
+            onBlur={(e) => e.currentTarget.style.borderColor = '#cbd5e1'}
           />
           {searchQuery && (
             <button
@@ -250,7 +266,7 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                 transform: 'translateY(-50%)',
                 background: 'none',
                 border: 'none',
-                color: 'var(--text-muted)',
+                color: '#64748b',
                 cursor: 'pointer'
               }}
             >
@@ -266,16 +282,16 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
               key={role}
               onClick={() => setSelectedRole(role)}
               style={{
-                background: selectedRole === role ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid',
-                borderColor: selectedRole === role ? 'var(--primary-500)' : 'var(--border-card)',
-                color: selectedRole === role ? 'white' : 'var(--text-secondary)',
+                background: selectedRole === role ? 'var(--primary-600)' : '#ffffff',
+                border: selectedRole === role ? '1px solid var(--primary-600)' : '1.5px solid #cbd5e1',
+                color: selectedRole === role ? '#ffffff' : '#334155',
                 padding: '8px 16px',
                 borderRadius: '20px',
                 fontSize: '13px',
-                fontWeight: 500,
+                fontWeight: 600,
                 cursor: 'pointer',
-                transition: 'var(--transition-fast)'
+                transition: 'var(--transition-fast)',
+                boxShadow: selectedRole === role ? '0 4px 12px rgba(79, 70, 229, 0.25)' : 'none'
               }}
             >
               {role}
@@ -287,45 +303,46 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
       {/* Main Content Grid / Table */}
       {loading ? (
         <div style={{
-          background: 'rgba(15, 12, 30, 0.2)',
-          border: '1px solid var(--border-card)',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
           borderRadius: '20px',
           padding: '48px 24px',
-          textAlign: 'center'
+          textAlign: 'center',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
         }}>
           <div className="spin-animation" style={{
             width: '32px',
             height: '32px',
-            border: '3px solid rgba(139, 92, 246, 0.1)',
-            borderTop: '3px solid var(--primary-500)',
+            border: '3px solid #ede9fe',
+            borderTop: '3px solid var(--primary-600)',
             borderRadius: '50%',
             margin: '0 auto 16px'
           }} />
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Loading platform users...</p>
+          <p style={{ color: '#475569', fontSize: '14px', fontWeight: 500 }}>Loading platform users...</p>
         </div>
       ) : error ? (
         <div style={{
-          background: 'rgba(239, 68, 68, 0.05)',
-          border: '1px solid rgba(239, 68, 68, 0.15)',
+          background: '#fef2f2',
+          border: '1px solid #fecaca',
           borderRadius: '20px',
           padding: '32px 24px',
           textAlign: 'center',
           maxWidth: '480px',
           margin: '0 auto'
         }}>
-          <AlertCircle size={36} style={{ color: 'var(--error)', marginBottom: '12px' }} />
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#f87171', marginBottom: '6px' }}>Failed to retrieve users</h3>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>{error}</p>
+          <AlertCircle size={36} style={{ color: '#dc2626', marginBottom: '12px' }} />
+          <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#991b1b', marginBottom: '6px' }}>Failed to retrieve users</h3>
+          <p style={{ fontSize: '13px', color: '#b91c1c', marginBottom: '16px' }}>{error}</p>
           <button
             onClick={fetchUsers}
             style={{
               background: 'var(--primary-600)',
               border: 'none',
-              color: 'white',
+              color: '#ffffff',
               padding: '8px 18px',
               borderRadius: '8px',
               fontSize: '13px',
-              fontWeight: 500,
+              fontWeight: 600,
               cursor: 'pointer'
             }}
           >
@@ -334,35 +351,34 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
         </div>
       ) : filteredUsers.length === 0 ? (
         <div style={{
-          background: 'rgba(15, 12, 30, 0.2)',
-          border: '1px dashed var(--border-card)',
+          background: '#ffffff',
+          border: '2px dashed #cbd5e1',
           borderRadius: '20px',
           padding: '48px 24px',
           textAlign: 'center'
         }}>
-          <Users size={36} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
-          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No users found</h3>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '320px', margin: '0 auto' }}>
+          <Users size={36} style={{ color: '#94a3b8', marginBottom: '12px' }} />
+          <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>No users found</h3>
+          <p style={{ fontSize: '13px', color: '#64748b', maxWidth: '320px', margin: '0 auto' }}>
             We couldn't find any users matching your filter or search query.
           </p>
         </div>
       ) : (
         <div style={{
-          background: 'rgba(15, 12, 30, 0.3)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid var(--border-card)',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
           borderRadius: '20px',
           overflow: 'hidden',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)'
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
         }}>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--border-card)', background: 'rgba(255, 255, 255, 0.01)' }}>
-                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>User Details</th>
-                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Role</th>
-                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phone / Timezone</th>
-                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Actions</th>
+                <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>User Details</th>
+                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Role</th>
+                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phone / Timezone</th>
+                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -375,11 +391,11 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                       key={user.id}
                       onClick={() => setSelectedUserId(user.id)}
                       style={{
-                        borderBottom: '1px solid var(--border-card)',
+                        borderBottom: '1px solid #e2e8f0',
                         transition: 'background 0.2s ease',
                         cursor: 'pointer'
                       }}
-                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)'}
+                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
                       onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       {/* User Info (Avatar + Name + Email) */}
@@ -389,23 +405,23 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                             width: '40px',
                             height: '40px',
                             borderRadius: '50%',
-                            background: isAdmin ? 'linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%)' : 'rgba(255, 255, 255, 0.05)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            background: isAdmin ? 'linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%)' : '#ede9fe',
+                            border: isAdmin ? 'none' : '1px solid #c7d2fe',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: '14px',
-                            fontWeight: 600,
-                            color: 'white',
-                            boxShadow: isAdmin ? '0 4px 10px rgba(139, 92, 246, 0.2)' : 'none'
+                            fontWeight: 700,
+                            color: isAdmin ? '#ffffff' : 'var(--primary-600)',
+                            boxShadow: isAdmin ? '0 4px 10px rgba(79, 70, 229, 0.25)' : 'none'
                           }}>
                             {initials}
                           </div>
                           <div>
-                            <div style={{ fontWeight: 600, color: 'white', fontSize: '14px' }}>
+                            <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>
                               {user.firstName} {user.lastName}
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '12px', marginTop: '2px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '12px', marginTop: '2px', fontWeight: 500 }}>
                               <Mail size={12} />
                               <span>{user.email}</span>
                             </div>
@@ -423,9 +439,9 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                           borderRadius: '20px',
                           fontSize: '11px',
                           fontWeight: 700,
-                          background: isAdmin ? 'rgba(139, 92, 246, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                          border: isAdmin ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
-                          color: isAdmin ? 'var(--primary-300)' : 'var(--text-secondary)'
+                          background: isAdmin ? '#ede9fe' : '#f1f5f9',
+                          border: isAdmin ? '1px solid #c7d2fe' : '1px solid #cbd5e1',
+                          color: isAdmin ? '#4338ca' : '#334155'
                         }}>
                           <Shield size={10} />
                           <span>{user.role}</span>
@@ -434,18 +450,18 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
 
                       {/* Phone & timezone */}
                       <td style={{ padding: '16px 24px' }}>
-                        <div style={{ fontSize: '13px', color: 'white' }}>
+                        <div style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600 }}>
                           {user.phone ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <Phone size={12} style={{ color: 'var(--text-muted)' }} />
+                              <Phone size={12} style={{ color: '#64748b' }} />
                               <span>{user.phone}</span>
                             </div>
                           ) : (
-                            <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '12px' }}>No phone</span>
+                            <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '12px', fontWeight: 400 }}>No phone</span>
                           )}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>
-                          <Globe size={12} style={{ color: 'var(--text-muted)' }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#475569', fontSize: '12px', marginTop: '4px' }}>
+                          <Globe size={12} style={{ color: '#64748b' }} />
                           <span>{user.timeZone}</span>
                         </div>
                       </td>
@@ -461,11 +477,11 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                             }}
                             title="Delete User"
                             style={{
-                              background: 'rgba(239, 68, 68, 0.1)',
-                              border: '1px solid rgba(239, 68, 68, 0.2)',
+                              background: '#fef2f2',
+                              border: '1.5px solid #fecaca',
                               borderRadius: '8px',
                               padding: '6px 10px',
-                              color: '#fca5a5',
+                              color: '#dc2626',
                               cursor: 'pointer',
                               display: 'inline-flex',
                               alignItems: 'center',
@@ -473,10 +489,12 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                               transition: 'var(--transition-fast)'
                             }}
                             onMouseOver={(e) => {
-                              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
+                              e.currentTarget.style.background = '#fee2e2';
+                              e.currentTarget.style.borderColor = '#f87171';
                             }}
                             onMouseOut={(e) => {
-                              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                              e.currentTarget.style.background = '#fef2f2';
+                              e.currentTarget.style.borderColor = '#fecaca';
                             }}
                           >
                             <Trash2 size={14} />
@@ -489,8 +507,8 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
               </tbody>
             </table>
           </div>
-          <div style={{ padding: '16px 24px', background: 'rgba(255, 255, 255, 0.01)', borderTop: '1px solid var(--border-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+          <div style={{ padding: '16px 24px', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+            <span style={{ fontSize: '13px', color: '#475569' }}>
               Total: <strong>{filteredUsers.length}</strong> user accounts shown
             </span>
           </div>
@@ -506,8 +524,8 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
           right: 0,
           bottom: 0,
           zIndex: 1100,
-          background: 'rgba(3, 0, 20, 0.6)',
-          backdropFilter: 'blur(10px)',
+          background: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -517,12 +535,12 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
         onClick={closeModal}
         >
           <div style={{
-            background: 'rgba(15, 12, 30, 0.95)',
-            border: '1px solid var(--border-card)',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
             borderRadius: '24px',
             width: '100%',
             maxWidth: '520px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(139, 92, 246, 0.15)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             overflow: 'hidden',
             animation: 'scale-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}
@@ -534,11 +552,11 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '20px 24px',
-              borderBottom: '1px solid var(--border-card)',
-              background: 'rgba(255, 255, 255, 0.01)'
+              borderBottom: '1px solid #e2e8f0',
+              background: '#f8fafc'
             }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Users size={18} style={{ color: 'var(--primary-400)' }} />
+              <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, color: '#0f172a', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Users size={18} style={{ color: 'var(--primary-600)' }} />
                 <span>User Account Details</span>
               </h3>
               <button
@@ -546,7 +564,7 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--text-secondary)',
+                  color: '#64748b',
                   cursor: 'pointer',
                   padding: '4px',
                   borderRadius: '50%',
@@ -556,12 +574,12 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                   transition: 'var(--transition-fast)'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.color = 'white';
+                  e.currentTarget.style.background = '#e2e8f0';
+                  e.currentTarget.style.color = '#0f172a';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.background = 'none';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
+                  e.currentTarget.style.color = '#64748b';
                 }}
               >
                 <X size={18} />
@@ -576,29 +594,30 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                     width: '56px',
                     height: '56px',
                     borderRadius: '50%',
-                    background: 'rgba(239, 68, 68, 0.1)',
-                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#ef4444',
+                    color: '#dc2626',
                     margin: '0 auto 20px'
                   }}>
                     <Trash2 size={24} />
                   </div>
-                  <h4 style={{ fontSize: '18px', fontWeight: 700, color: 'white', marginBottom: '8px' }}>Delete User Account?</h4>
-                  <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.5', maxWidth: '340px', margin: '0 auto 24px' }}>
-                    Are you sure you want to delete <strong>{detailedUser?.firstName} {detailedUser?.lastName}</strong>? This action cannot be undone and will permanently remove their access.
+                  <h4 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Delete User Account?</h4>
+                  <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.5', maxWidth: '340px', margin: '0 auto 24px' }}>
+                    Are you sure you want to delete <strong style={{ color: '#0f172a' }}>{detailedUser?.firstName} {detailedUser?.lastName}</strong>? This action cannot be undone and will permanently remove their access.
                   </p>
                   
                   {deleteError && (
                     <div style={{
-                      background: 'rgba(239, 68, 68, 0.05)',
-                      border: '1px solid rgba(239, 68, 68, 0.15)',
+                      background: '#fef2f2',
+                      border: '1px solid #fecaca',
                       borderRadius: '8px',
                       padding: '10px 14px',
-                      color: '#f87171',
+                      color: '#dc2626',
                       fontSize: '13px',
+                      fontWeight: 500,
                       marginBottom: '20px',
                       textAlign: 'left',
                       display: 'flex',
@@ -618,13 +637,13 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                       }}
                       disabled={deleteLoading}
                       style={{
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid var(--border-card)',
-                        color: 'white',
+                        background: '#ffffff',
+                        border: '1.5px solid #cbd5e1',
+                        color: '#334155',
                         padding: '10px 20px',
                         borderRadius: '10px',
                         fontSize: '13px',
-                        fontWeight: 500,
+                        fontWeight: 600,
                         cursor: 'pointer'
                       }}
                     >
@@ -634,13 +653,13 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                       onClick={() => detailedUser && handleDeleteUser(detailedUser.id)}
                       disabled={deleteLoading}
                       style={{
-                        background: '#ef4444',
+                        background: '#dc2626',
                         border: 'none',
-                        color: 'white',
+                        color: '#ffffff',
                         padding: '10px 20px',
                         borderRadius: '10px',
                         fontSize: '13px',
-                        fontWeight: 500,
+                        fontWeight: 600,
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -656,17 +675,17 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                   <div className="spin-animation" style={{
                     width: '32px',
                     height: '32px',
-                    border: '3px solid rgba(139, 92, 246, 0.1)',
-                    borderTop: '3px solid var(--primary-500)',
+                    border: '3px solid #ede9fe',
+                    borderTop: '3px solid var(--primary-600)',
                     borderRadius: '50%',
                     margin: '0 auto 16px'
                   }} />
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Fetching details from platform...</p>
+                  <p style={{ color: '#475569', fontSize: '14px', fontWeight: 500 }}>Fetching details from platform...</p>
                 </div>
               ) : detailsError ? (
                 <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                  <AlertCircle size={36} style={{ color: 'var(--error)', marginBottom: '12px' }} />
-                  <p style={{ fontSize: '14px', color: '#f87171', margin: 0 }}>{detailsError}</p>
+                  <AlertCircle size={36} style={{ color: '#dc2626', marginBottom: '12px' }} />
+                  <p style={{ fontSize: '14px', color: '#dc2626', margin: 0, fontWeight: 500 }}>{detailsError}</p>
                 </div>
               ) : detailedUser ? (
                 <div>
@@ -676,20 +695,20 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                       width: '80px',
                       height: '80px',
                       borderRadius: '50%',
-                      background: detailedUser.role === 'ADMIN' ? 'linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%)' : 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      background: detailedUser.role === 'ADMIN' ? 'linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%)' : '#ede9fe',
+                      border: detailedUser.role === 'ADMIN' ? 'none' : '2px solid #c7d2fe',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: '28px',
                       fontWeight: 700,
-                      color: 'white',
-                      boxShadow: detailedUser.role === 'ADMIN' ? '0 10px 25px rgba(139, 92, 246, 0.3)' : 'none',
+                      color: detailedUser.role === 'ADMIN' ? '#ffffff' : 'var(--primary-600)',
+                      boxShadow: detailedUser.role === 'ADMIN' ? '0 10px 25px rgba(79, 70, 229, 0.25)' : 'none',
                       marginBottom: '16px'
                     }}>
                       {`${detailedUser.firstName?.[0] || ''}${detailedUser.lastName?.[0] || ''}`.toUpperCase() || 'U'}
                     </div>
-                    <h4 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 6px 0', color: 'white' }}>
+                    <h4 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 6px 0', color: '#0f172a' }}>
                       {detailedUser.firstName} {detailedUser.lastName}
                     </h4>
                     <span style={{
@@ -700,9 +719,9 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                       borderRadius: '20px',
                       fontSize: '11px',
                       fontWeight: 700,
-                      background: detailedUser.role === 'ADMIN' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                      border: detailedUser.role === 'ADMIN' ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
-                      color: detailedUser.role === 'ADMIN' ? 'var(--primary-300)' : 'var(--text-secondary)'
+                      background: detailedUser.role === 'ADMIN' ? '#ede9fe' : '#f1f5f9',
+                      border: detailedUser.role === 'ADMIN' ? '1px solid #c7d2fe' : '1px solid #cbd5e1',
+                      color: detailedUser.role === 'ADMIN' ? '#4338ca' : '#334155'
                     }}>
                       <Shield size={10} />
                       <span>{detailedUser.role}</span>
@@ -710,60 +729,60 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                   </div>
 
                   {/* Metadata Fields Grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px', background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border-card)', borderRadius: '16px', padding: '20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px' }}>
                     {/* User ID */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '10px' }}>
-                      <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>User ID</span>
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: 'white' }}>#{detailedUser.id}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
+                      <span style={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>User ID</span>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>#{detailedUser.id}</span>
                     </div>
 
                     {/* Email */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '10px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Email Address</span>
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Mail size={12} style={{ color: 'var(--text-muted)' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>Email Address</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Mail size={12} style={{ color: '#64748b' }} />
                         {detailedUser.email}
                       </span>
                     </div>
 
                     {/* Phone */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '10px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Phone Number</span>
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>Phone Number</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {detailedUser.phone ? (
                           <>
-                            <Phone size={12} style={{ color: 'var(--text-muted)' }} />
+                            <Phone size={12} style={{ color: '#64748b' }} />
                             {detailedUser.phone}
                           </>
                         ) : (
-                          <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '12px' }}>Not Provided</span>
+                          <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '12px' }}>Not Provided</span>
                         )}
                       </span>
                     </div>
 
                     {/* Timezone */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '10px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Time Zone</span>
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Globe size={12} style={{ color: 'var(--text-muted)' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>Time Zone</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Globe size={12} style={{ color: '#64748b' }} />
                         {detailedUser.timeZone}
                       </span>
                     </div>
 
                     {/* Created Date */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '10px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Created On</span>
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Calendar size={12} style={{ color: 'var(--text-muted)' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>Created On</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Calendar size={12} style={{ color: '#64748b' }} />
                         {formatDate(detailedUser.createdAt)}
                       </span>
                     </div>
 
                     {/* Updated Date */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Last Updated</span>
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Clock size={12} style={{ color: 'var(--text-muted)' }} />
+                      <span style={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>Last Updated</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Clock size={12} style={{ color: '#64748b' }} />
                         {new Date(detailedUser.updatedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
@@ -775,18 +794,23 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
             {/* Modal Footer */}
             <div style={{
               padding: '16px 24px',
-              borderTop: '1px solid var(--border-card)',
-              background: 'rgba(255, 255, 255, 0.01)',
+              borderTop: '1px solid #e2e8f0',
+              background: '#f8fafc',
               display: 'flex',
               justifyContent: 'flex-end'
             }}>
               <button
                 onClick={closeModal}
-                className="btn-primary"
                 style={{
-                  padding: '8px 18px',
+                  padding: '8px 20px',
                   fontSize: '13px',
-                  borderRadius: '10px'
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)'
                 }}
               >
                 Close Details
