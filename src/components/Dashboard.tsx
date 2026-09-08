@@ -1,23 +1,26 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ShoppingCart, LogOut, Tag, Check, ShoppingBag, X, Users, LayoutDashboard } from 'lucide-react';
+import { 
+  Search, 
+  ShoppingCart, 
+  LogOut, 
+  Tag, 
+  Check, 
+  ShoppingBag, 
+  X, 
+  Users, 
+  LayoutDashboard, 
+  Menu, 
+  User, 
+  CreditCard, 
+  Package, 
+  ChevronRight, 
+  ShieldCheck 
+} from 'lucide-react';
 import { Profile } from './Profile';
 import { UsersList } from './UsersList';
 import { CatalogManagement } from './CatalogManagement';
 import { api } from '../services/api';
 
-// interface Product {
-//   id: number;
-//   title: string;
-//   category: string;
-//   price: number;
-//   originalPrice: number;
-//   rating: number;
-//   reviewsCount: number;
-//   image: string;
-//   badge?: string;
-//   description: string;
-//   isAssured?: boolean;
-// }
 interface Product{
   id: number;
   name: string;
@@ -57,6 +60,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
   const [toastMessage, setToastMessage] = useState('');
   const [currentTab, setCurrentTab] = useState<'products' | 'profile' | 'users' | 'catalog' | 'overview' | 'orders' | 'payments'>('products');
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   
   // Cart & Order states
   const [showCartDrawer, setShowCartDrawer] = useState(false);
@@ -172,6 +177,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
     setTimeout(() => {
       setShowCartToast(false);
     }, 2500);
+  };
+
+  const handleNavClick = (tab: 'products' | 'profile' | 'users' | 'catalog' | 'overview' | 'orders' | 'payments') => {
+    setCurrentTab(tab);
+    setMobileMenuOpen(false);
   };
 
   useEffect(() => {
@@ -307,7 +317,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
   const totalCartItems = Object.values(cart).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '0 16px 48px' }}>
+    <div className="dashboard-wrapper">
       {/* Toast Alert */}
       {showCartToast && (
         <div style={{
@@ -335,388 +345,922 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
         </div>
       )}
 
-      {/* Navigation Search Bar (Amazon / Flipkart layout style) */}
-      <nav style={{
-        background: 'rgba(15, 12, 30, 0.7)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid var(--border-card)',
-        borderRadius: '20px',
-        padding: '16px 24px',
-        marginTop: '24px',
-        marginBottom: '32px',
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '16px',
-        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.4)'
-      }}>
-        {/* Logo Section */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(139, 92, 246, 0.3)'
-          }}>
-            <ShoppingBag style={{ color: 'white', width: '20px', height: '20px' }} />
-          </div>
-          <span style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 800,
-            fontSize: '22px',
-            letterSpacing: '-0.02em',
-            background: 'linear-gradient(to right, #ffffff, var(--primary-300))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            ShopSphere
-          </span>
-        </div>
-
-        {/* Search Input Container */}
-        <div style={{
-          position: 'relative',
-          flex: '1 1 350px',
-          maxWidth: '500px',
-          display: 'flex',
-          alignItems: 'center'
-        }}>
-          <Search style={{
-            position: 'absolute',
-            left: '16px',
-            color: 'var(--text-muted)',
-            pointerEvents: 'none'
-          }} size={18} />
-          <input
-            type="text"
-            placeholder="Search products, brands, or categories..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid var(--border-card)',
-              borderRadius: '30px',
-              padding: '12px 20px 12px 48px',
-              fontSize: '14px',
-              color: 'var(--text-primary)',
-              outline: 'none',
-              transition: 'var(--transition-smooth)'
-            }}
-            className="form-input"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              style={{
-                position: 'absolute',
-                right: '16px',
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer'
-              }}
-            >
-              <X size={16} />
-            </button>
-          )}
-        </div>
-
-        {/* Right Nav Utilities */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          {/* User profile identifier */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }} className="d-sm-flex">
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Signed in as</span>
-            <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--primary-300)' }}>
-              {userEmail.length > 20 ? `${userEmail.slice(0, 18)}...` : userEmail}
-            </span>
-          </div>
-
-          {/* Shop Navigation Button */}
-          {userRole !== 'ADMIN' && currentTab !== 'products' && (
-            <button
-              onClick={() => setCurrentTab('products')}
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              Shop
-            </button>
-          )}
-
-          {/* My Orders Button */}
-          {userRole !== 'ADMIN' && (
-            <button
-              onClick={() => setCurrentTab('orders')}
-              style={{
-                background: currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              My Orders
-            </button>
-          )}
-
-          {/* My Payments Button */}
-          {userRole !== 'ADMIN' && (
-            <button
-              onClick={() => setCurrentTab('payments')}
-              style={{
-                background: currentTab === 'payments' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = currentTab === 'payments' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = currentTab === 'payments' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              My Payments
-            </button>
-          )}
-
-          {/* Overview Navigation Button (Admin Only) */}
-          {userRole === 'ADMIN' && (
-            <button
-              onClick={() => setCurrentTab('overview')}
-              style={{
-                background: currentTab === 'overview' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = currentTab === 'overview' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = currentTab === 'overview' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              <LayoutDashboard size={14} />
-              <span>Overview</span>
-            </button>
-          )}
-
-          {/* Catalog Management Button (Admin Only) */}
-          {userRole === 'ADMIN' && (
-            <button
-              onClick={() => setCurrentTab('catalog')}
-              style={{
-                background: currentTab === 'catalog' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = currentTab === 'catalog' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = currentTab === 'catalog' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              <ShoppingBag size={14} />
-              <span>Manage Catalog</span>
-            </button>
-          )}
-
-          {/* Users Navigation Button (Admin Only) */}
-          {userRole === 'ADMIN' && (
-            <button
-              onClick={() => setCurrentTab('users')}
-              style={{
-                background: currentTab === 'users' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = currentTab === 'users' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = currentTab === 'users' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              <Users size={14} />
-              <span>Users</span>
-            </button>
-          )}
-
-          {/* Orders Navigation Button (Admin Only) */}
-          {userRole === 'ADMIN' && (
-            <button
-              onClick={() => setCurrentTab('orders')}
-              style={{
-                background: currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-card)',
-                borderRadius: '30px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'var(--transition-fast)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = currentTab === 'orders' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-              }}
-            >
-              <ShoppingCart size={14} />
-              <span>Orders</span>
-            </button>
-          )}
-
-          {/* Profile Navigation Button */}
-          <button
-            onClick={() => setCurrentTab('profile')}
-            style={{
-              background: currentTab === 'profile' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid var(--border-card)',
-              borderRadius: '30px',
-              padding: '8px 16px',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              transition: 'var(--transition-fast)'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.background = currentTab === 'profile' ? 'var(--primary-700)' : 'rgba(255, 255, 255, 0.1)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = currentTab === 'profile' ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.05)';
-            }}
+      {/* Responsive Navigation Bar */}
+      <nav className="navbar-container">
+        {/* Main Header Row */}
+        <div className="navbar-main-row">
+          {/* Logo Section */}
+          <button 
+            onClick={() => handleNavClick(userRole === 'ADMIN' ? 'overview' : 'products')}
+            className="navbar-logo-btn"
           >
-            Profile
+            <div className="navbar-logo-icon">
+              <ShoppingBag style={{ color: 'white', width: '20px', height: '20px' }} />
+            </div>
+            <span className="navbar-logo-text">
+              ShopSphere
+            </span>
           </button>
 
-          {/* Cart Icon */}
-          {userRole !== 'ADMIN' && (
-            <div 
-              onClick={() => setShowCartDrawer(true)}
-              style={{ position: 'relative', cursor: 'pointer', padding: '6px' }}
-            >
-              <ShoppingCart size={22} style={{ color: 'var(--text-primary)', opacity: 0.9 }} />
-              {totalCartItems > 0 && (
-                <span style={{
+          {/* Desktop Search Input Container */}
+          <div className="navbar-desktop-search">
+            <Search style={{
+              position: 'absolute',
+              left: '16px',
+              color: '#64748b',
+              pointerEvents: 'none'
+            }} size={18} />
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                background: '#ffffff',
+                border: '1.5px solid #cbd5e1',
+                borderRadius: '30px',
+                padding: '12px 42px 12px 48px',
+                fontSize: '14px',
+                color: '#0f172a',
+                outline: 'none',
+                transition: 'var(--transition-smooth)'
+              }}
+              className="form-input"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                style={{
                   position: 'absolute',
-                  top: '-2px',
-                  right: '-2px',
-                  background: 'var(--primary-500)',
-                  color: 'white',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
+                  right: '16px',
+                  background: 'none',
+                  border: 'none',
+                  color: '#64748b',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          {/* Desktop Right Nav Utilities */}
+          <div className="navbar-desktop-nav">
+            {/* User profile identifier */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: '4px', maxWidth: '140px' }}>
+              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Signed in</span>
+              <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#4338ca', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
+                {userEmail}
+              </span>
+            </div>
+
+            {/* Shop Navigation Button */}
+            {userRole !== 'ADMIN' && currentTab !== 'products' && (
+              <button
+                onClick={() => handleNavClick('products')}
+                style={{
+                  background: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '20px',
+                  padding: '7px 14px',
+                  color: '#1e293b',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = '#f1f5f9';
+                  e.currentTarget.style.borderColor = '#94a3b8';
+                  e.currentTarget.style.color = '#0f172a';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.borderColor = '#cbd5e1';
+                  e.currentTarget.style.color = '#1e293b';
+                }}
+              >
+                Shop
+              </button>
+            )}
+
+            {/* My Orders Button */}
+            {userRole !== 'ADMIN' && (
+              <button
+                onClick={() => handleNavClick('orders')}
+                style={{
+                  background: currentTab === 'orders' ? 'var(--primary-600)' : '#ffffff',
+                  border: currentTab === 'orders' ? '1.5px solid var(--primary-600)' : '1.5px solid #cbd5e1',
+                  borderRadius: '20px',
+                  padding: '7px 14px',
+                  color: currentTab === 'orders' ? '#ffffff' : '#1e293b',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  boxShadow: currentTab === 'orders' ? '0 4px 12px rgba(79, 70, 229, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.05)',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  if (currentTab !== 'orders') {
+                    e.currentTarget.style.background = '#f1f5f9';
+                    e.currentTarget.style.borderColor = '#94a3b8';
+                    e.currentTarget.style.color = '#0f172a';
+                  } else {
+                    e.currentTarget.style.background = 'var(--primary-700)';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (currentTab !== 'orders') {
+                    e.currentTarget.style.background = '#ffffff';
+                    e.currentTarget.style.borderColor = '#cbd5e1';
+                    e.currentTarget.style.color = '#1e293b';
+                  } else {
+                    e.currentTarget.style.background = 'var(--primary-600)';
+                  }
+                }}
+              >
+                My Orders
+              </button>
+            )}
+
+            {/* My Payments Button */}
+            {userRole !== 'ADMIN' && (
+              <button
+                onClick={() => handleNavClick('payments')}
+                style={{
+                  background: currentTab === 'payments' ? 'var(--primary-600)' : '#ffffff',
+                  border: currentTab === 'payments' ? '1.5px solid var(--primary-600)' : '1.5px solid #cbd5e1',
+                  borderRadius: '20px',
+                  padding: '7px 14px',
+                  color: currentTab === 'payments' ? '#ffffff' : '#1e293b',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  boxShadow: currentTab === 'payments' ? '0 4px 12px rgba(79, 70, 229, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.05)',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  if (currentTab !== 'payments') {
+                    e.currentTarget.style.background = '#f1f5f9';
+                    e.currentTarget.style.borderColor = '#94a3b8';
+                    e.currentTarget.style.color = '#0f172a';
+                  } else {
+                    e.currentTarget.style.background = 'var(--primary-700)';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (currentTab !== 'payments') {
+                    e.currentTarget.style.background = '#ffffff';
+                    e.currentTarget.style.borderColor = '#cbd5e1';
+                    e.currentTarget.style.color = '#1e293b';
+                  } else {
+                    e.currentTarget.style.background = 'var(--primary-600)';
+                  }
+                }}
+              >
+                My Payments
+              </button>
+            )}
+
+            {/* Overview Navigation Button (Admin Only) */}
+            {userRole === 'ADMIN' && (
+              <button
+                onClick={() => handleNavClick('overview')}
+                style={{
+                  background: currentTab === 'overview' ? 'var(--primary-600)' : '#ffffff',
+                  border: currentTab === 'overview' ? '1.5px solid var(--primary-600)' : '1.5px solid #cbd5e1',
+                  borderRadius: '20px',
+                  padding: '7px 14px',
+                  color: currentTab === 'overview' ? '#ffffff' : '#1e293b',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                  boxShadow: currentTab === 'overview' ? '0 4px 12px rgba(79, 70, 229, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.05)',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  if (currentTab !== 'overview') {
+                    e.currentTarget.style.background = '#f1f5f9';
+                    e.currentTarget.style.borderColor = '#94a3b8';
+                    e.currentTarget.style.color = '#0f172a';
+                  } else {
+                    e.currentTarget.style.background = 'var(--primary-700)';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (currentTab !== 'overview') {
+                    e.currentTarget.style.background = '#ffffff';
+                    e.currentTarget.style.borderColor = '#cbd5e1';
+                    e.currentTarget.style.color = '#1e293b';
+                  } else {
+                    e.currentTarget.style.background = 'var(--primary-600)';
+                  }
+                }}
+              >
+                <LayoutDashboard size={14} />
+                <span>Overview</span>
+              </button>
+            )}
+
+            {/* Catalog Management Button (Admin Only) */}
+            {userRole === 'ADMIN' && (
+              <button
+                onClick={() => handleNavClick('catalog')}
+                style={{
+                  background: currentTab === 'catalog' ? 'var(--primary-600)' : '#ffffff',
+                  border: currentTab === 'catalog' ? '1.5px solid var(--primary-600)' : '1.5px solid #cbd5e1',
+                  borderRadius: '20px',
+                  padding: '7px 14px',
+                  color: currentTab === 'catalog' ? '#ffffff' : '#1e293b',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                  boxShadow: currentTab === 'catalog' ? '0 4px 12px rgba(79, 70, 229, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.05)',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  if (currentTab !== 'catalog') {
+                    e.currentTarget.style.background = '#f1f5f9';
+                    e.currentTarget.style.borderColor = '#94a3b8';
+                    e.currentTarget.style.color = '#0f172a';
+                  } else {
+                    e.currentTarget.style.background = 'var(--primary-700)';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (currentTab !== 'catalog') {
+                    e.currentTarget.style.background = '#ffffff';
+                    e.currentTarget.style.borderColor = '#cbd5e1';
+                    e.currentTarget.style.color = '#1e293b';
+                  } else {
+                    e.currentTarget.style.background = 'var(--primary-600)';
+                  }
+                }}
+              >
+                <ShoppingBag size={14} />
+                <span>Catalog</span>
+              </button>
+            )}
+
+            {/* Users Navigation Button (Admin Only) */}
+            {userRole === 'ADMIN' && (
+              <button
+                onClick={() => handleNavClick('users')}
+                style={{
+                  background: currentTab === 'users' ? 'var(--primary-600)' : '#ffffff',
+                  border: currentTab === 'users' ? '1.5px solid var(--primary-600)' : '1.5px solid #cbd5e1',
+                  borderRadius: '20px',
+                  padding: '7px 14px',
+                  color: currentTab === 'users' ? '#ffffff' : '#1e293b',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                  boxShadow: currentTab === 'users' ? '0 4px 12px rgba(79, 70, 229, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.05)',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  if (currentTab !== 'users') {
+                    e.currentTarget.style.background = '#f1f5f9';
+                    e.currentTarget.style.borderColor = '#94a3b8';
+                    e.currentTarget.style.color = '#0f172a';
+                  } else {
+                    e.currentTarget.style.background = 'var(--primary-700)';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (currentTab !== 'users') {
+                    e.currentTarget.style.background = '#ffffff';
+                    e.currentTarget.style.borderColor = '#cbd5e1';
+                    e.currentTarget.style.color = '#1e293b';
+                  } else {
+                    e.currentTarget.style.background = 'var(--primary-600)';
+                  }
+                }}
+              >
+                <Users size={14} />
+                <span>Users</span>
+              </button>
+            )}
+
+            {/* Orders Navigation Button (Admin Only) */}
+            {userRole === 'ADMIN' && (
+              <button
+                onClick={() => handleNavClick('orders')}
+                style={{
+                  background: currentTab === 'orders' ? 'var(--primary-600)' : '#ffffff',
+                  border: currentTab === 'orders' ? '1.5px solid var(--primary-600)' : '1.5px solid #cbd5e1',
+                  borderRadius: '20px',
+                  padding: '7px 14px',
+                  color: currentTab === 'orders' ? '#ffffff' : '#1e293b',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                  boxShadow: currentTab === 'orders' ? '0 4px 12px rgba(79, 70, 229, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.05)',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  if (currentTab !== 'orders') {
+                    e.currentTarget.style.background = '#f1f5f9';
+                    e.currentTarget.style.borderColor = '#94a3b8';
+                    e.currentTarget.style.color = '#0f172a';
+                  } else {
+                    e.currentTarget.style.background = 'var(--primary-700)';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (currentTab !== 'orders') {
+                    e.currentTarget.style.background = '#ffffff';
+                    e.currentTarget.style.borderColor = '#cbd5e1';
+                    e.currentTarget.style.color = '#1e293b';
+                  } else {
+                    e.currentTarget.style.background = 'var(--primary-600)';
+                  }
+                }}
+              >
+                <Package size={14} />
+                <span>Orders</span>
+              </button>
+            )}
+
+            {/* Profile Navigation Button */}
+            <button
+              onClick={() => handleNavClick('profile')}
+              style={{
+                background: currentTab === 'profile' ? 'var(--primary-600)' : '#ffffff',
+                border: currentTab === 'profile' ? '1.5px solid var(--primary-600)' : '1.5px solid #cbd5e1',
+                borderRadius: '20px',
+                padding: '7px 14px',
+                color: currentTab === 'profile' ? '#ffffff' : '#1e293b',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                boxShadow: currentTab === 'profile' ? '0 4px 12px rgba(79, 70, 229, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.05)',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => {
+                if (currentTab !== 'profile') {
+                  e.currentTarget.style.background = '#f1f5f9';
+                  e.currentTarget.style.borderColor = '#94a3b8';
+                  e.currentTarget.style.color = '#0f172a';
+                } else {
+                  e.currentTarget.style.background = 'var(--primary-700)';
+                }
+              }}
+              onMouseOut={(e) => {
+                if (currentTab !== 'profile') {
+                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.borderColor = '#cbd5e1';
+                  e.currentTarget.style.color = '#1e293b';
+                } else {
+                  e.currentTarget.style.background = 'var(--primary-600)';
+                }
+              }}
+            >
+              Profile
+            </button>
+
+            {/* Cart Icon */}
+            {userRole !== 'ADMIN' && (
+              <div 
+                onClick={() => setShowCartDrawer(true)}
+                style={{ position: 'relative', cursor: 'pointer', padding: '6px' }}
+                title="Shopping Cart"
+              >
+                <ShoppingCart size={22} style={{ color: '#0f172a' }} />
+                {totalCartItems > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-2px',
+                    right: '-2px',
+                    background: 'var(--primary-600)',
+                    color: 'white',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 6px rgba(79, 70, 229, 0.4)',
+                    animation: 'scale-up 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+                  }}>
+                    {totalCartItems}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Logout Button */}
+            <button
+              onClick={onLogout}
+              style={{
+                background: '#fef2f2',
+                border: '1.5px solid #fecaca',
+                borderRadius: '20px',
+                padding: '7px 14px',
+                color: '#dc2626',
+                fontSize: '13px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = '#fee2e2';
+                e.currentTarget.style.borderColor = '#fca5a5';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = '#fef2f2';
+                e.currentTarget.style.borderColor = '#fecaca';
+              }}
+            >
+              <LogOut size={15} />
+              <span>Sign Out</span>
+            </button>
+          </div>
+
+          {/* Mobile Right Action Controls */}
+          <div className="navbar-mobile-actions">
+            {/* Mobile Search Toggle */}
+            <button 
+              onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+              className={`navbar-icon-btn ${mobileSearchOpen ? 'active' : ''}`}
+              aria-label="Toggle search"
+            >
+              <Search size={18} />
+            </button>
+
+            {/* Mobile Cart Icon */}
+            {userRole !== 'ADMIN' && (
+              <button 
+                onClick={() => setShowCartDrawer(true)}
+                className="navbar-icon-btn"
+                aria-label="View shopping cart"
+              >
+                <ShoppingCart size={18} />
+                {totalCartItems > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    background: 'var(--primary-500)',
+                    color: 'white',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    width: '17px',
+                    height: '17px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 0 6px rgba(139, 92, 246, 0.8)'
+                  }}>
+                    {totalCartItems}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {/* Mobile Menu Hamburger Toggle */}
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={`navbar-icon-btn ${mobileMenuOpen ? 'active' : ''}`}
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Search Row (Expandable on small screens) */}
+        {mobileSearchOpen && (
+          <div className="navbar-mobile-search">
+            <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center' }}>
+              <Search style={{
+                position: 'absolute',
+                left: '14px',
+                color: '#64748b',
+                pointerEvents: 'none'
+              }} size={16} />
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+                style={{
+                  width: '100%',
+                  background: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '24px',
+                  padding: '10px 38px 10px 40px',
+                  fontSize: '13px',
+                  color: '#0f172a',
+                  outline: 'none',
+                  transition: 'var(--transition-smooth)'
+                }}
+                className="form-input"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#64748b',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <X size={15} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </nav>
+
+      {/* Mobile Navigation Drawer Modal */}
+      {mobileMenuOpen && (
+        <>
+          <div 
+            className="navbar-drawer-backdrop" 
+            onClick={() => setMobileMenuOpen(false)} 
+          />
+          <div className="navbar-mobile-drawer" onClick={(e) => e.stopPropagation()}>
+            {/* Drawer Header with Close button */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="navbar-logo-icon" style={{ width: '32px', height: '32px' }}>
+                  <ShoppingBag size={16} />
+                </div>
+                <span className="navbar-logo-text" style={{ fontSize: '18px' }}>ShopSphere</span>
+              </div>
+              <button 
+                onClick={() => setMobileMenuOpen(false)}
+                className="navbar-icon-btn"
+                style={{ width: '36px', height: '36px' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* User Info Card */}
+            <div className="drawer-user-card">
+              <div className="drawer-user-avatar">
+                {userEmail ? userEmail.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <div className="drawer-user-info">
+                <div className="drawer-user-email" title={userEmail}>
+                  {userEmail}
+                </div>
+                <span 
+                  className="drawer-user-role" 
+                  style={{
+                    background: userRole === 'ADMIN' ? '#ede9fe' : '#ecfdf5',
+                    color: userRole === 'ADMIN' ? '#5b21b6' : '#047857',
+                    border: `1px solid ${userRole === 'ADMIN' ? '#c4b5fd' : '#a7f3d0'}`
+                  }}
+                >
+                  <ShieldCheck size={12} />
+                  {userRole === 'ADMIN' ? 'Admin Access' : 'Verified Customer'}
+                </span>
+              </div>
+            </div>
+
+            {/* Navigation List */}
+            <div className="drawer-nav-list">
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '4px' }}>
+                Navigation
+              </span>
+
+              {userRole !== 'ADMIN' ? (
+                <>
+                  <button 
+                    onClick={() => handleNavClick('products')}
+                    className={`drawer-nav-item ${currentTab === 'products' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <ShoppingBag size={18} style={{ color: currentTab === 'products' ? '#4f46e5' : '#64748b' }} />
+                      <span>Storefront & Catalog</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => handleNavClick('orders')}
+                    className={`drawer-nav-item ${currentTab === 'orders' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <Package size={18} style={{ color: currentTab === 'orders' ? '#4f46e5' : '#64748b' }} />
+                      <span>My Orders</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => handleNavClick('payments')}
+                    className={`drawer-nav-item ${currentTab === 'payments' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <CreditCard size={18} style={{ color: currentTab === 'payments' ? '#4f46e5' : '#64748b' }} />
+                      <span>My Payments</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => handleNavClick('profile')}
+                    className={`drawer-nav-item ${currentTab === 'profile' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <User size={18} style={{ color: currentTab === 'profile' ? '#4f46e5' : '#64748b' }} />
+                      <span>My Profile & Settings</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setShowCartDrawer(true);
+                    }}
+                    className="drawer-nav-item"
+                    style={{
+                      background: '#ede9fe',
+                      borderColor: '#c4b5fd'
+                    }}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <ShoppingCart size={18} style={{ color: '#4f46e5' }} />
+                      <span style={{ color: '#4338ca', fontWeight: 700 }}>Shopping Cart</span>
+                    </div>
+                    {totalCartItems > 0 && (
+                      <span style={{
+                        background: 'var(--primary-600)',
+                        color: 'white',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: '12px'
+                      }}>
+                        {totalCartItems} items
+                      </span>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => handleNavClick('overview')}
+                    className={`drawer-nav-item ${currentTab === 'overview' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <LayoutDashboard size={18} style={{ color: currentTab === 'overview' ? '#4f46e5' : '#64748b' }} />
+                      <span>Overview Dashboard</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => handleNavClick('catalog')}
+                    className={`drawer-nav-item ${currentTab === 'catalog' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <ShoppingBag size={18} style={{ color: currentTab === 'catalog' ? '#4f46e5' : '#64748b' }} />
+                      <span>Manage Catalog (Products & Categories)</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => handleNavClick('users')}
+                    className={`drawer-nav-item ${currentTab === 'users' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <Users size={18} style={{ color: currentTab === 'users' ? '#4f46e5' : '#64748b' }} />
+                      <span>User Management</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => handleNavClick('orders')}
+                    className={`drawer-nav-item ${currentTab === 'orders' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <Package size={18} style={{ color: currentTab === 'orders' ? '#4f46e5' : '#64748b' }} />
+                      <span>Order Management</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+
+                  <button 
+                    onClick={() => handleNavClick('profile')}
+                    className={`drawer-nav-item ${currentTab === 'profile' ? 'active' : ''}`}
+                  >
+                    <div className="drawer-nav-item-left">
+                      <User size={18} style={{ color: currentTab === 'profile' ? '#4f46e5' : '#64748b' }} />
+                      <span>Admin Profile</span>
+                    </div>
+                    <ChevronRight size={16} opacity={0.6} />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Logout Action */}
+            <div style={{ paddingTop: '8px', borderTop: '1px solid var(--border-card)' }}>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onLogout();
+                }}
+                style={{
+                  width: '100%',
+                  background: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '14px',
+                  padding: '12px 16px',
+                  color: '#dc2626',
+                  fontSize: '14px',
+                  fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 0 8px rgba(139, 92, 246, 0.6)',
-                  animation: 'scale-up 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-                }}>
-                  {totalCartItems}
-                </span>
-              )}
+                  gap: '8px',
+                  cursor: 'pointer',
+                  transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = '#fee2e2';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = '#fef2f2';
+                }}
+              >
+                <LogOut size={16} />
+                <span>Sign Out of Account</span>
+              </button>
             </div>
-          )}
+          </div>
+        </>
+      )}
 
-          {/* Logout Button */}
-          <button
-            onClick={onLogout}
-            style={{
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              borderRadius: '30px',
-              padding: '8px 16px',
-              color: '#fca5a5',
-              fontSize: '14px',
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer',
-              transition: 'var(--transition-fast)'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-            }}
-          >
-            <LogOut size={16} />
-            <span>Sign Out</span>
-          </button>
+      {/* Mobile Bottom Navigation Bar (< 768px) */}
+      <nav className="mobile-bottom-nav" aria-label="Mobile Navigation">
+        <div className="mobile-bottom-nav-inner">
+          {userRole !== 'ADMIN' ? (
+            <>
+              <button
+                onClick={() => handleNavClick('products')}
+                className={`mobile-bottom-tab ${currentTab === 'products' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <ShoppingBag size={18} />
+                </div>
+                <span>Shop</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('orders')}
+                className={`mobile-bottom-tab ${currentTab === 'orders' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <Package size={18} />
+                </div>
+                <span>Orders</span>
+              </button>
+
+              <button
+                onClick={() => setShowCartDrawer(true)}
+                className="mobile-bottom-tab"
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <ShoppingCart size={18} />
+                  {totalCartItems > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-2px',
+                      right: '-2px',
+                      background: 'var(--primary-500)',
+                      color: 'white',
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      width: '15px',
+                      height: '15px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      {totalCartItems}
+                    </span>
+                  )}
+                </div>
+                <span>Cart</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('payments')}
+                className={`mobile-bottom-tab ${currentTab === 'payments' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <CreditCard size={18} />
+                </div>
+                <span>Payments</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('profile')}
+                className={`mobile-bottom-tab ${currentTab === 'profile' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <User size={18} />
+                </div>
+                <span>Profile</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => handleNavClick('overview')}
+                className={`mobile-bottom-tab ${currentTab === 'overview' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <LayoutDashboard size={18} />
+                </div>
+                <span>Overview</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('catalog')}
+                className={`mobile-bottom-tab ${currentTab === 'catalog' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <ShoppingBag size={18} />
+                </div>
+                <span>Catalog</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('users')}
+                className={`mobile-bottom-tab ${currentTab === 'users' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <Users size={18} />
+                </div>
+                <span>Users</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('orders')}
+                className={`mobile-bottom-tab ${currentTab === 'orders' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <Package size={18} />
+                </div>
+                <span>Orders</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('profile')}
+                className={`mobile-bottom-tab ${currentTab === 'profile' ? 'active' : ''}`}
+              >
+                <div className="mobile-bottom-icon-wrapper">
+                  <User size={18} />
+                </div>
+                <span>Profile</span>
+              </button>
+            </>
+          )}
         </div>
       </nav>
 
@@ -732,25 +1276,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
           <div style={{ animation: 'fade-in 0.4s ease-out' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
               <div>
-                <h2 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '6px', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
+                <h2 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '6px', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', color: '#0f172a' }}>
                   {userRole === 'ADMIN' ? 'Manage Orders' : 'My Orders'}
                 </h2>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                <p style={{ color: '#475569', fontSize: '14px', fontWeight: 500 }}>
                   {userRole === 'ADMIN' ? 'View status and details of all customer orders.' : 'View status and details of your placed orders.'}
                 </p>
               </div>
               <button
                 onClick={() => setCurrentTab(userRole === 'ADMIN' ? 'overview' : 'products')}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid var(--border-card)',
+                  background: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
                   borderRadius: '30px',
-                  padding: '8px 16px',
-                  color: 'white',
+                  padding: '8px 18px',
+                  color: '#1e293b',
                   fontSize: '14px',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
                   transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = '#f1f5f9';
+                  e.currentTarget.style.borderColor = '#94a3b8';
+                  e.currentTarget.style.color = '#0f172a';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.borderColor = '#cbd5e1';
+                  e.currentTarget.style.color = '#1e293b';
                 }}
               >
                 {userRole === 'ADMIN' ? 'Back to Overview' : 'Back to Shop'}
@@ -762,25 +1317,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                 <div style={{
                   width: '40px',
                   height: '40px',
-                  border: '3px solid rgba(139, 92, 246, 0.1)',
-                  borderTop: '3px solid var(--primary-500)',
+                  border: '3px solid rgba(79, 70, 229, 0.1)',
+                  borderTop: '3px solid var(--primary-600)',
                   borderRadius: '50%',
                   margin: '0 auto 16px',
                   animation: 'spin 1s linear infinite'
                 }} />
-                <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>Loading your orders...</p>
+                <p style={{ color: '#475569', fontSize: '15px', fontWeight: 500 }}>Loading your orders...</p>
               </div>
             ) : ordersError ? (
               <div style={{
                 textAlign: 'center',
                 padding: '32px 24px',
-                background: 'rgba(239, 68, 68, 0.05)',
-                border: '1px solid rgba(239, 68, 68, 0.15)',
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
                 borderRadius: '16px',
                 maxWidth: '480px',
                 margin: '0 auto'
               }}>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                <p style={{ color: '#991b1b', fontSize: '14px', fontWeight: 500 }}>
                   Could not fetch orders from the server. ({ordersError})
                 </p>
               </div>
@@ -788,15 +1343,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
               <div style={{
                 textAlign: 'center',
                 padding: '64px 24px',
-                background: 'rgba(255, 255, 255, 0.01)',
-                border: '1px dashed var(--border-card)',
+                background: '#ffffff',
+                border: '1.5px dashed #cbd5e1',
                 borderRadius: '24px'
               }}>
-                <ShoppingBag size={48} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
-                 <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>
+                <ShoppingBag size={48} style={{ color: '#94a3b8', marginBottom: '16px' }} />
+                 <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#0f172a' }}>
                   {userRole === 'ADMIN' ? 'No orders in system' : 'No orders placed yet'}
                 </h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '14px', maxWidth: '360px', margin: '0 auto' }}>
+                <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '360px', margin: '0 auto' }}>
                   {userRole === 'ADMIN' ? 'There are currently no customer orders recorded in the system.' : "You haven't placed any orders yet. Browse our catalog and add items to your cart!"}
                 </p>
                 <button
@@ -806,11 +1361,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                     background: 'var(--primary-600)',
                     border: 'none',
                     color: 'white',
-                    padding: '10px 20px',
+                    padding: '10px 22px',
                     borderRadius: '30px',
                     cursor: 'pointer',
                     fontSize: '14px',
-                    fontWeight: 500,
+                    fontWeight: 600,
+                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)',
                     transition: 'var(--transition-fast)'
                   }}
                   onMouseOver={(e) => e.currentTarget.style.background = 'var(--primary-700)'}
@@ -823,19 +1379,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {orders.map((order: any) => (
                   <div key={order.orderId} style={{
-                    background: 'rgba(15, 12, 30, 0.4)',
-                    border: '1px solid var(--border-card)',
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
                     borderRadius: '16px',
                     padding: '20px',
                     display: 'flex',
                     flexWrap: 'wrap',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: '16px'
+                    gap: '16px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
                   }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: 'white' }}>
+                        <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
                           Order #{order.orderId}
                         </span>
                         <span style={{
@@ -843,23 +1400,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                           fontWeight: 700,
                           padding: '3px 8px',
                           borderRadius: '12px',
-                          background: order.status === 'CREATED' ? 'rgba(59, 130, 246, 0.15)' : order.status === 'CANCELLED' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                          color: order.status === 'CREATED' ? '#60a5fa' : order.status === 'CANCELLED' ? '#f87171' : '#34d399',
+                          background: order.status === 'CREATED' ? '#dbeafe' : order.status === 'CANCELLED' ? '#fee2e2' : '#d1fae5',
+                          color: order.status === 'CREATED' ? '#1d4ed8' : order.status === 'CANCELLED' ? '#b91c1c' : '#047857',
                           textTransform: 'uppercase'
                         }}>
                           {order.status}
                         </span>
                       </div>
                       {userRole === 'ADMIN' && order.userName && (
-                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                          Customer: <strong>{order.userName}</strong> (User #{order.userId})
+                        <div style={{ fontSize: '13px', color: '#475569', marginBottom: '4px' }}>
+                          Customer: <strong style={{ color: '#0f172a' }}>{order.userName}</strong> (User #{order.userId})
                         </div>
                       )}
-                      <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--primary-300)', margin: '0 0 4px' }}>
+                      <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#4338ca', margin: '0 0 4px' }}>
                         {order.productName}
                       </h4>
-                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                        Quantity: {order.quantity} | Price: ₹{order.price}
+                      <div style={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>
+                        Quantity: <strong style={{ color: '#0f172a' }}>{order.quantity}</strong> | Price: <strong style={{ color: '#0f172a' }}>₹{order.price}</strong>
                       </div>
                       {order.status === 'CREATED' && userRole !== 'ADMIN' && (
                         <div style={{ display: 'flex', gap: '8px', marginTop: '12px', alignItems: 'center' }}>
@@ -867,18 +1424,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                             id={`payment-method-${order.orderId}`}
                             defaultValue="UPI"
                             style={{
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              border: '1px solid var(--border-card)',
+                              background: '#ffffff',
+                              border: '1.5px solid #cbd5e1',
                               borderRadius: '8px',
-                              padding: '5px 8px',
-                              color: 'white',
-                              fontSize: '12px',
+                              padding: '6px 10px',
+                              color: '#0f172a',
+                              fontSize: '13px',
+                              fontWeight: 500,
                               outline: 'none'
                             }}
                           >
-                            <option value="UPI" style={{ background: '#0d0a1b' }}>UPI</option>
-                            <option value="CARD" style={{ background: '#0d0a1b' }}>Card</option>
-                            <option value="NET_BANKING" style={{ background: '#0d0a1b' }}>Net Banking</option>
+                            <option value="UPI" style={{ background: '#ffffff', color: '#0f172a' }}>UPI</option>
+                            <option value="CARD" style={{ background: '#ffffff', color: '#0f172a' }}>Card</option>
+                            <option value="NET_BANKING" style={{ background: '#ffffff', color: '#0f172a' }}>Net Banking</option>
                           </select>
                           <button
                             onClick={() => {
@@ -886,15 +1444,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                               handlePayOrder(order.orderId, el ? el.value : 'UPI');
                             }}
                             style={{
-                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
                               border: 'none',
                               borderRadius: '8px',
-                              padding: '6px 12px',
+                              padding: '7px 14px',
                               color: 'white',
-                              fontSize: '12px',
+                              fontSize: '13px',
                               fontWeight: 600,
                               cursor: 'pointer',
-                              boxShadow: '0 4px 10px rgba(16, 185, 129, 0.2)'
+                              boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)'
                             }}
                           >
                             Pay Now
@@ -903,10 +1461,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                       )}
                     </div>
                     <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                      <div style={{ fontSize: '18px', fontWeight: 700, color: 'white', marginBottom: '4px' }}>
+                      <div style={{ fontSize: '19px', fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
                         Total: ₹{order.totalAmount}
                       </div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      <div style={{ fontSize: '12px', color: '#64748b' }}>
                         Ordered: {new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                       {order.status !== 'CANCELLED' && (
@@ -914,21 +1472,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                           onClick={() => handleCancelOrder(order.orderId)}
                           style={{
                             marginTop: '8px',
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                            background: '#fef2f2',
+                            border: '1px solid #fecaca',
                             borderRadius: '8px',
                             padding: '6px 12px',
-                            color: '#fca5a5',
+                            color: '#dc2626',
                             fontSize: '12px',
-                            fontWeight: 500,
+                            fontWeight: 600,
                             cursor: 'pointer',
                             transition: 'var(--transition-fast)'
                           }}
                           onMouseOver={(e) => {
-                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                            e.currentTarget.style.background = '#fee2e2';
                           }}
                           onMouseOut={(e) => {
-                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                            e.currentTarget.style.background = '#fef2f2';
                           }}
                         >
                           Cancel Order
@@ -944,25 +1502,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
           <div style={{ animation: 'fade-in 0.4s ease-out' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
               <div>
-                <h2 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '6px', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
+                <h2 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '6px', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', color: '#0f172a' }}>
                   Payment History
                 </h2>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                <p style={{ color: '#475569', fontSize: '14px', fontWeight: 500 }}>
                   View details of all your past transactions and payments.
                 </p>
               </div>
               <button
                 onClick={() => setCurrentTab('products')}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid var(--border-card)',
+                  background: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
                   borderRadius: '30px',
-                  padding: '8px 16px',
-                  color: 'white',
+                  padding: '8px 18px',
+                  color: '#1e293b',
                   fontSize: '14px',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
                   transition: 'var(--transition-fast)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = '#f1f5f9';
+                  e.currentTarget.style.borderColor = '#94a3b8';
+                  e.currentTarget.style.color = '#0f172a';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.borderColor = '#cbd5e1';
+                  e.currentTarget.style.color = '#1e293b';
                 }}
               >
                 Back to Shop
@@ -974,25 +1543,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                 <div style={{
                   width: '40px',
                   height: '40px',
-                  border: '3px solid rgba(139, 92, 246, 0.1)',
-                  borderTop: '3px solid var(--primary-500)',
+                  border: '3px solid rgba(79, 70, 229, 0.1)',
+                  borderTop: '3px solid var(--primary-600)',
                   borderRadius: '50%',
                   margin: '0 auto 16px',
                   animation: 'spin 1s linear infinite'
                 }} />
-                <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>Loading transaction history...</p>
+                <p style={{ color: '#475569', fontSize: '15px', fontWeight: 500 }}>Loading transaction history...</p>
               </div>
             ) : paymentsError ? (
               <div style={{
                 textAlign: 'center',
                 padding: '32px 24px',
-                background: 'rgba(239, 68, 68, 0.05)',
-                border: '1px solid rgba(239, 68, 68, 0.15)',
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
                 borderRadius: '16px',
                 maxWidth: '480px',
                 margin: '0 auto'
               }}>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                <p style={{ color: '#991b1b', fontSize: '14px', fontWeight: 500 }}>
                   Could not fetch payments history. ({paymentsError})
                 </p>
               </div>
@@ -1000,13 +1569,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
               <div style={{
                 textAlign: 'center',
                 padding: '64px 24px',
-                background: 'rgba(255, 255, 255, 0.01)',
-                border: '1px dashed var(--border-card)',
+                background: '#ffffff',
+                border: '1.5px dashed #cbd5e1',
                 borderRadius: '24px'
               }}>
-                <ShoppingBag size={48} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
-                <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>No payments recorded</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '14px', maxWidth: '360px', margin: '0 auto' }}>
+                <ShoppingBag size={48} style={{ color: '#94a3b8', marginBottom: '16px' }} />
+                <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#0f172a' }}>No payments recorded</h3>
+                <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '360px', margin: '0 auto' }}>
                   You haven't made any payments yet. Go to your orders to make a payment!
                 </p>
                 <button
@@ -1016,11 +1585,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                     background: 'var(--primary-600)',
                     border: 'none',
                     color: 'white',
-                    padding: '10px 20px',
+                    padding: '10px 22px',
                     borderRadius: '30px',
                     cursor: 'pointer',
                     fontSize: '14px',
-                    fontWeight: 500,
+                    fontWeight: 600,
+                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)',
                     transition: 'var(--transition-fast)'
                   }}
                   onMouseOver={(e) => e.currentTarget.style.background = 'var(--primary-700)'}
@@ -1033,19 +1603,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {payments.map((payment: any) => (
                   <div key={payment.id} style={{
-                    background: 'rgba(15, 12, 30, 0.4)',
-                    border: '1px solid var(--border-card)',
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
                     borderRadius: '16px',
                     padding: '20px',
                     display: 'flex',
                     flexWrap: 'wrap',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: '16px'
+                    gap: '16px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
                   }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: 'white' }}>
+                        <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
                           Transaction ID: {payment.transactionId || `TXN-${payment.id}`}
                         </span>
                         <span style={{
@@ -1053,25 +1624,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                           fontWeight: 700,
                           padding: '3px 8px',
                           borderRadius: '12px',
-                          background: payment.paymentStatus === 'SUCCESS' ? 'rgba(16, 185, 129, 0.15)' : payment.paymentStatus === 'PENDING' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                          color: payment.paymentStatus === 'SUCCESS' ? '#34d399' : payment.paymentStatus === 'PENDING' ? '#fbbf24' : '#f87171',
+                          background: payment.paymentStatus === 'SUCCESS' ? '#d1fae5' : payment.paymentStatus === 'PENDING' ? '#fef3c7' : '#fee2e2',
+                          color: payment.paymentStatus === 'SUCCESS' ? '#047857' : payment.paymentStatus === 'PENDING' ? '#b45309' : '#b91c1c',
                           textTransform: 'uppercase'
                         }}>
                           {payment.paymentStatus}
                         </span>
                       </div>
-                      <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                        Order ID: <strong style={{ color: 'white' }}>#{payment.orderId}</strong> | Payment Method: <strong>{payment.paymentMethod}</strong>
+                      <div style={{ fontSize: '14px', color: '#475569', marginBottom: '4px' }}>
+                        Order ID: <strong style={{ color: '#0f172a' }}>#{payment.orderId}</strong> | Payment Method: <strong style={{ color: '#0f172a' }}>{payment.paymentMethod}</strong>
                       </div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                        Status of Order: <span style={{ color: 'var(--primary-300)' }}>{payment.orderStatus}</span>
+                      <div style={{ fontSize: '12px', color: '#64748b' }}>
+                        Status of Order: <span style={{ color: '#4338ca', fontWeight: 600 }}>{payment.orderStatus}</span>
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '20px', fontWeight: 700, color: '#34d399', marginBottom: '4px' }}>
+                      <div style={{ fontSize: '20px', fontWeight: 800, color: '#059669', marginBottom: '4px' }}>
                         ₹{payment.amount}
                       </div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      <div style={{ fontSize: '12px', color: '#64748b' }}>
                         Date: {new Date(payment.createdAt).toLocaleDateString()} {new Date(payment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
@@ -1082,10 +1653,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
           </div>
         ) : currentTab === 'overview' ? (
           <div style={{ animation: 'fade-in 0.4s ease-out' }}>
-            <h2 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '6px', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
+            <h2 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '6px', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', color: '#0f172a' }}>
               Admin Control Panel
             </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '32px' }}>
+            <p style={{ color: '#475569', fontSize: '14px', fontWeight: 500, marginBottom: '32px' }}>
               Welcome back! Here is a summary of the store's current catalog and registered users.
             </p>
 
@@ -1098,31 +1669,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
             }}>
               {/* Products Card */}
               <div style={{
-                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.03) 100%)',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
+                background: '#ffffff',
+                border: '1px solid #e0e7ff',
                 borderRadius: '24px',
                 padding: '24px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '20px',
-                boxShadow: '0 10px 20px rgba(0, 0, 0, 0.15)'
+                boxShadow: '0 4px 16px rgba(99, 102, 246, 0.08)'
               }}>
                 <div style={{
                   width: '56px',
                   height: '56px',
                   borderRadius: '16px',
-                  background: 'rgba(139, 92, 246, 0.15)',
-                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  background: '#ede9fe',
+                  border: '1px solid #c4b5fd',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'var(--primary-400)'
+                  color: '#4f46e5'
                 }}>
                   <ShoppingBag size={24} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Products</div>
-                  <div style={{ fontSize: '32px', fontWeight: 700, color: 'white', marginTop: '4px' }}>
+                  <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Products</div>
+                  <div style={{ fontSize: '32px', fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>
                     {statsLoading ? '...' : totalProducts}
                   </div>
                 </div>
@@ -1130,31 +1701,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
 
               {/* Categories Card */}
               <div style={{
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.03) 100%)',
-                border: '1px solid rgba(16, 185, 129, 0.2)',
+                background: '#ffffff',
+                border: '1px solid #d1fae5',
                 borderRadius: '24px',
                 padding: '24px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '20px',
-                boxShadow: '0 10px 20px rgba(0, 0, 0, 0.15)'
+                boxShadow: '0 4px 16px rgba(16, 185, 129, 0.08)'
               }}>
                 <div style={{
                   width: '56px',
                   height: '56px',
                   borderRadius: '16px',
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  background: '#d1fae5',
+                  border: '1px solid #a7f3d0',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#34d399'
+                  color: '#059669'
                 }}>
                   <Tag size={24} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Categories</div>
-                  <div style={{ fontSize: '32px', fontWeight: 700, color: 'white', marginTop: '4px' }}>
+                  <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Categories</div>
+                  <div style={{ fontSize: '32px', fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>
                     {statsLoading ? '...' : totalCategories}
                   </div>
                 </div>
@@ -1162,31 +1733,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
 
               {/* Users Card */}
               <div style={{
-                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.03) 100%)',
-                border: '1px solid rgba(59, 130, 246, 0.2)',
+                background: '#ffffff',
+                border: '1px solid #dbeafe',
                 borderRadius: '24px',
                 padding: '24px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '20px',
-                boxShadow: '0 10px 20px rgba(0, 0, 0, 0.15)'
+                boxShadow: '0 4px 16px rgba(59, 130, 246, 0.08)'
               }}>
                 <div style={{
                   width: '56px',
                   height: '56px',
                   borderRadius: '16px',
-                  background: 'rgba(59, 130, 246, 0.15)',
-                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  background: '#dbeafe',
+                  border: '1px solid #bfdbfe',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#60a5fa'
+                  color: '#2563eb'
                 }}>
                   <Users size={24} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Registered Users</div>
-                  <div style={{ fontSize: '32px', fontWeight: 700, color: 'white', marginTop: '4px' }}>
+                  <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Registered Users</div>
+                  <div style={{ fontSize: '32px', fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>
                     {statsLoading ? '...' : totalUsers}
                   </div>
                 </div>
@@ -1195,24 +1766,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
 
             {/* Quick Actions Panel */}
             <div style={{
-              background: 'rgba(15, 12, 30, 0.4)',
+              background: '#ffffff',
               border: '1px solid var(--border-card)',
               borderRadius: '24px',
               padding: '32px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)'
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)'
             }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px', fontFamily: 'var(--font-display)' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '20px', fontFamily: 'var(--font-display)', color: '#0f172a' }}>
                 System Quick Actions
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
                 <button
                   onClick={() => setCurrentTab('catalog')}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--border-card)',
+                    background: '#f8fafc',
+                    border: '1.5px solid #e2e8f0',
                     borderRadius: '16px',
                     padding: '20px',
-                    color: 'white',
+                    color: '#0f172a',
                     fontSize: '14px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -1225,28 +1796,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                   }}
                   onMouseOver={(e) => {
                     e.currentTarget.style.borderColor = 'var(--primary-500)';
-                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.05)';
+                    e.currentTarget.style.background = '#eef2ff';
                   }}
                   onMouseOut={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-card)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.background = '#f8fafc';
                   }}
                 >
-                  <ShoppingBag size={24} style={{ color: 'var(--primary-400)' }} />
+                  <ShoppingBag size={24} style={{ color: 'var(--primary-600)' }} />
                   <div>
-                    <div style={{ fontWeight: 600 }}>Manage Catalog</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 400, marginTop: '4px' }}>Add & edit products or categories</div>
+                    <div style={{ fontWeight: 700, color: '#0f172a' }}>Manage Catalog</div>
+                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500, marginTop: '4px' }}>Add & edit products or categories</div>
                   </div>
                 </button>
 
                 <button
                   onClick={() => setCurrentTab('users')}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--border-card)',
+                    background: '#f8fafc',
+                    border: '1.5px solid #e2e8f0',
                     borderRadius: '16px',
                     padding: '20px',
-                    color: 'white',
+                    color: '#0f172a',
                     fontSize: '14px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -1259,28 +1830,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                   }}
                   onMouseOver={(e) => {
                     e.currentTarget.style.borderColor = 'var(--primary-500)';
-                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.05)';
+                    e.currentTarget.style.background = '#eef2ff';
                   }}
                   onMouseOut={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-card)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.background = '#f8fafc';
                   }}
                 >
-                  <Users size={24} style={{ color: '#60a5fa' }} />
+                  <Users size={24} style={{ color: '#2563eb' }} />
                   <div>
-                    <div style={{ fontWeight: 600 }}>Manage Users</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 400, marginTop: '4px' }}>View store managers and permissions</div>
+                    <div style={{ fontWeight: 700, color: '#0f172a' }}>Manage Users</div>
+                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500, marginTop: '4px' }}>View store managers and permissions</div>
                   </div>
                 </button>
 
                 <button
                   onClick={() => setCurrentTab('profile')}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--border-card)',
+                    background: '#f8fafc',
+                    border: '1.5px solid #e2e8f0',
                     borderRadius: '16px',
                     padding: '20px',
-                    color: 'white',
+                    color: '#0f172a',
                     fontSize: '14px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -1293,17 +1864,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                   }}
                   onMouseOver={(e) => {
                     e.currentTarget.style.borderColor = 'var(--primary-500)';
-                    e.currentTarget.style.background = 'rgba(139, 92, 246, 0.05)';
+                    e.currentTarget.style.background = '#eef2ff';
                   }}
                   onMouseOut={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-card)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.background = '#f8fafc';
                   }}
                 >
-                  <LayoutDashboard size={24} style={{ color: '#34d399' }} />
+                  <LayoutDashboard size={24} style={{ color: '#059669' }} />
                   <div>
-                    <div style={{ fontWeight: 600 }}>Admin Profile</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 400, marginTop: '4px' }}>Update profile settings and credentials</div>
+                    <div style={{ fontWeight: 700, color: '#0f172a' }}>Admin Profile</div>
+                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500, marginTop: '4px' }}>Update profile settings and credentials</div>
                   </div>
                 </button>
               </div>
@@ -1316,27 +1887,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                 <div style={{
                   width: '40px',
                   height: '40px',
-                  border: '3px solid rgba(139, 92, 246, 0.1)',
-                  borderTop: '3px solid var(--primary-500)',
+                  border: '3px solid rgba(79, 70, 229, 0.1)',
+                  borderTop: '3px solid var(--primary-600)',
                   borderRadius: '50%',
                   margin: '0 auto 16px',
                   animation: 'spin 1s linear infinite'
                 }} />
-                <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>Loading products from server...</p>
+                <p style={{ color: '#475569', fontSize: '15px', fontWeight: 500 }}>Loading products from server...</p>
               </div>
             ) : error ? (
               <div style={{
                 textAlign: 'center',
                 padding: '48px 24px',
-                background: 'rgba(239, 68, 68, 0.05)',
-                border: '1px solid rgba(239, 68, 68, 0.15)',
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
                 borderRadius: '16px',
                 maxWidth: '480px',
                 margin: '32px auto 0'
               }}>
-                <X size={40} style={{ color: '#ef4444', marginBottom: '16px' }} />
-                <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px', color: '#f87171' }}>Failed to Load Products</h3>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>{error}</p>
+                <X size={40} style={{ color: '#dc2626', marginBottom: '16px' }} />
+                <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#991b1b' }}>Failed to Load Products</h3>
+                <p style={{ color: '#7f1d1d', fontSize: '14px', marginBottom: '16px' }}>{error}</p>
               </div>
             ) : (
               <>
@@ -1354,29 +1925,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                       key={category}
                       onClick={() => setSelectedCategory(category)}
                       style={{
-                        background: selectedCategory === category ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.02)',
-                        border: '1px solid',
-                        borderColor: selectedCategory === category ? 'var(--primary-500)' : 'var(--border-card)',
-                        color: selectedCategory === category ? 'white' : 'var(--text-secondary)',
+                        background: selectedCategory === category ? 'var(--primary-600)' : '#ffffff',
+                        border: '1.5px solid',
+                        borderColor: selectedCategory === category ? 'var(--primary-600)' : '#cbd5e1',
+                        color: selectedCategory === category ? '#ffffff' : '#334155',
                         padding: '10px 20px',
                         borderRadius: '30px',
                         fontSize: '14px',
-                        fontWeight: 500,
+                        fontWeight: 600,
                         cursor: 'pointer',
                         whiteSpace: 'nowrap',
                         transition: 'var(--transition-fast)',
-                        boxShadow: selectedCategory === category ? '0 4px 12px rgba(124, 58, 237, 0.25)' : 'none'
+                        boxShadow: selectedCategory === category ? '0 4px 12px rgba(79, 70, 229, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
                       }}
                       onMouseOver={(e) => {
                         if (selectedCategory !== category) {
-                          e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                          e.currentTarget.style.borderColor = '#94a3b8';
+                          e.currentTarget.style.background = '#f1f5f9';
+                          e.currentTarget.style.color = '#0f172a';
                         }
                       }}
                       onMouseOut={(e) => {
                         if (selectedCategory !== category) {
-                          e.currentTarget.style.borderColor = 'var(--border-card)';
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                          e.currentTarget.style.borderColor = '#cbd5e1';
+                          e.currentTarget.style.background = '#ffffff';
+                          e.currentTarget.style.color = '#334155';
                         }
                       }}
                     >
@@ -1391,12 +1964,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   marginBottom: '20px',
-                  color: 'var(--text-secondary)'
+                  color: '#475569'
                 }}>
-                  <p style={{ fontSize: '14px' }}>
-                    Showing <strong>{filteredProducts.length}</strong> products
-                    {selectedCategory !== 'All' && <span> in <strong style={{ color: 'var(--primary-300)' }}>{selectedCategory}</strong></span>}
-                    {searchQuery && <span> matching "<strong style={{ color: 'var(--primary-300)' }}>{searchQuery}</strong>"</span>}
+                  <p style={{ fontSize: '14px', fontWeight: 500 }}>
+                    Showing <strong style={{ color: '#0f172a' }}>{filteredProducts.length}</strong> products
+                    {selectedCategory !== 'All' && <span> in <strong style={{ color: '#4338ca' }}>{selectedCategory}</strong></span>}
+                    {searchQuery && <span> matching "<strong style={{ color: '#4338ca' }}>{searchQuery}</strong>"</span>}
                   </p>
                 </div>
 
@@ -1405,31 +1978,35 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                   <div style={{
                     textAlign: 'center',
                     padding: '64px 24px',
-                    background: 'rgba(255, 255, 255, 0.01)',
-                    border: '1px dashed var(--border-card)',
+                    background: '#ffffff',
+                    border: '1.5px dashed #cbd5e1',
                     borderRadius: '24px'
                   }}>
-                    <ShoppingBag size={48} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
-                    <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>No products found</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', maxWidth: '360px', margin: '0 auto' }}>
+                    <ShoppingBag size={48} style={{ color: '#94a3b8', marginBottom: '16px' }} />
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#0f172a' }}>No products found</h3>
+                    <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '360px', margin: '0 auto' }}>
                       We couldn't find any products matching your search criteria. Try adjusting your query or filters.
                     </p>
                     <button
                       onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }}
                       style={{
                         marginTop: '16px',
-                        background: 'none',
-                        border: '1px solid var(--primary-500)',
-                        color: 'var(--primary-300)',
-                        padding: '8px 18px',
+                        background: '#ffffff',
+                        border: '1.5px solid var(--primary-600)',
+                        color: 'var(--primary-600)',
+                        padding: '8px 20px',
                         borderRadius: '20px',
                         cursor: 'pointer',
                         fontSize: '13px',
-                        fontWeight: 500,
+                        fontWeight: 600,
                         transition: 'var(--transition-fast)'
                       }}
-                      onMouseOver={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)'}
-                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = 'var(--primary-50)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = '#ffffff';
+                      }}
                     >
                       Clear Filters
                     </button>
@@ -1447,26 +2024,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                         <div
                           key={product.id}
                           style={{
-                            background: 'rgba(15, 12, 30, 0.4)',
-                            backdropFilter: 'blur(10px)',
-                            border: '1px solid var(--border-card)',
+                            background: '#ffffff',
+                            border: '1px solid #e2e8f0',
                             borderRadius: '20px',
                             overflow: 'hidden',
                             display: 'flex',
                             flexDirection: 'column',
                             transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s, box-shadow 0.3s',
                             position: 'relative',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.04)'
                           }}
                           onMouseOver={(e) => {
                             e.currentTarget.style.transform = 'translateY(-6px)';
-                            e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.25)';
-                            e.currentTarget.style.boxShadow = '0 12px 24px rgba(139, 92, 246, 0.1)';
+                            e.currentTarget.style.borderColor = '#818cf8';
+                            e.currentTarget.style.boxShadow = '0 12px 28px rgba(79, 70, 229, 0.12)';
                           }}
                           onMouseOut={(e) => {
                             e.currentTarget.style.transform = 'none';
-                            e.currentTarget.style.borderColor = 'var(--border-card)';
-                            e.currentTarget.style.boxShadow = 'none';
+                            e.currentTarget.style.borderColor = '#e2e8f0';
+                            e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.04)';
                           }}
                         >
                           {/* Badge Tag (for Low Stock) */}
@@ -1498,11 +2075,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                             height: '180px',
                             overflow: 'hidden',
                             position: 'relative',
-                            background: 'rgba(255, 255, 255, 0.03)',
+                            background: '#f8fafc',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            borderBottom: '1px solid var(--border-card)'
+                            borderBottom: '1px solid #f1f5f9'
                           }}>
                             {product.image ? (
                               <img
@@ -1518,38 +2095,39 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                                 onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                               />
                             ) : (
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: '#94a3b8' }}>
                                 <ShoppingBag size={32} />
-                                <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>No Image Available</span>
+                                <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>No Image Available</span>
                               </div>
                             )}
                           </div>
 
                           {/* Content Container */}
                           <div style={{
-                            padding: '24px',
+                            padding: '20px 22px',
                             display: 'flex',
                             flexDirection: 'column',
                             flex: '1',
-                            gap: '12px'
+                            gap: '8px'
                           }}>
                             {/* Category */}
                             <span style={{
                               fontSize: '11px',
-                              fontWeight: 600,
+                              fontWeight: 700,
                               textTransform: 'uppercase',
-                              color: 'var(--primary-400)',
+                              color: 'var(--primary-600)',
                               letterSpacing: '0.05em'
                             }}>
                               {product.categoryName}
                             </span>
 
-                            {/* Title */}
+                            {/* Title - Fixed height so 1-line and 2-line names occupy identical vertical space */}
                             <h4 style={{
-                              fontSize: '18px',
-                              fontWeight: 600,
-                              lineHeight: '1.4',
-                              color: 'var(--text-primary)',
+                              fontSize: '16px',
+                              fontWeight: 700,
+                              lineHeight: '1.35',
+                              minHeight: '44px',
+                              color: '#0f172a',
                               display: '-webkit-box',
                               WebkitLineClamp: 2,
                               WebkitBoxOrient: 'vertical',
@@ -1559,54 +2137,78 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                               {product.name}
                             </h4>
 
-                            {/* Description */}
+                            {/* Description - Fixed height for uniform alignment */}
                             <p style={{
                               fontSize: '13px',
-                              color: 'var(--text-secondary)',
-                              lineHeight: '1.5',
+                              color: '#475569',
+                              lineHeight: '1.45',
+                              minHeight: '38px',
                               display: '-webkit-box',
-                              WebkitLineClamp: 3,
+                              WebkitLineClamp: 2,
                               WebkitBoxOrient: 'vertical',
                               overflow: 'hidden',
                               margin: 0
                             }}>
-                              {product.description}
+                              {product.description || 'Quality product available in our catalog.'}
                             </p>
 
-                            {/* Price Block */}
+                            {/* Bottom Action Footer - Anchored to bottom with marginTop: auto for 100% horizontal alignment */}
                             <div style={{
+                              marginTop: 'auto',
+                              paddingTop: '14px',
+                              borderTop: '1px solid #f1f5f9',
                               display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              marginTop: '8px'
+                              flexDirection: 'column',
+                              gap: '12px'
                             }}>
-                              <span style={{ fontSize: '22px', fontWeight: 700, color: 'white' }}>
-                                ₹{product.price}
-                              </span>
-                              <span style={{ fontSize: '12px', color: product.stock > 0 ? '#10b981' : '#ef4444', fontWeight: 600 }}>
-                                {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
-                              </span>
-                            </div>
+                              {/* Price Block */}
+                              <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                              }}>
+                                <span style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
+                                  ₹{product.price}
+                                </span>
+                                <span style={{
+                                  fontSize: '11.5px',
+                                  color: product.stock > 0 ? '#059669' : '#dc2626',
+                                  fontWeight: 700,
+                                  background: product.stock > 0 ? '#ecfdf5' : '#fef2f2',
+                                  padding: '2px 8px',
+                                  borderRadius: '6px'
+                                }}>
+                                  {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+                                </span>
+                              </div>
 
-                            {/* Add to Cart CTA */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAddToCart(product);
-                              }}
-                              className="btn-primary"
-                              style={{
-                                padding: '10px 14px',
-                                fontSize: '13px',
-                                borderRadius: '8px',
-                                gap: '6px',
-                                background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)',
-                                boxShadow: '0 4px 8px rgba(124, 58, 237, 0.15)'
-                              }}
-                            >
-                              <ShoppingCart size={14} />
-                              <span>Add to Cart</span>
-                            </button>
+                              {/* Add to Cart CTA */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAddToCart(product);
+                                }}
+                                disabled={product.stock <= 0}
+                                className="btn-primary"
+                                style={{
+                                  width: '100%',
+                                  padding: '10px 14px',
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                  borderRadius: '10px',
+                                  gap: '6px',
+                                  background: product.stock <= 0
+                                    ? '#94a3b8'
+                                    : 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%)',
+                                  boxShadow: product.stock <= 0 ? 'none' : '0 4px 10px rgba(79, 70, 229, 0.2)',
+                                  cursor: product.stock <= 0 ? 'not-allowed' : 'pointer',
+                                  opacity: product.stock <= 0 ? 0.7 : 1
+                                }}
+                              >
+                                <ShoppingCart size={14} />
+                                <span>{product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -1627,8 +2229,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.6)',
-          backdropFilter: 'blur(4px)',
+          background: 'rgba(15, 23, 42, 0.4)',
+          backdropFilter: 'blur(6px)',
           zIndex: 1050,
           display: 'flex',
           justifyContent: 'flex-end',
@@ -1637,12 +2239,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
           <div style={{
             width: '100%',
             maxWidth: '450px',
-            background: '#0d0a1b',
+            background: '#ffffff',
             borderLeft: '1px solid var(--border-card)',
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: '-10px 0 30px rgba(0, 0, 0, 0.5)',
+            boxShadow: '-10px 0 35px rgba(0, 0, 0, 0.1)',
             animation: 'slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
           }} onClick={(e) => e.stopPropagation()}>
             {/* Drawer Header */}
@@ -1651,23 +2253,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
               borderBottom: '1px solid var(--border-card)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between'
+              justifyContent: 'space-between',
+              background: '#ffffff'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ShoppingCart size={20} style={{ color: 'var(--primary-400)' }} />
-                <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, fontFamily: 'var(--font-display)' }}>Your Cart</h3>
+                <ShoppingCart size={20} style={{ color: 'var(--primary-600)' }} />
+                <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, fontFamily: 'var(--font-display)', color: '#0f172a' }}>Your Cart</h3>
               </div>
               <button 
                 onClick={() => setShowCartDrawer(false)}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
+                  background: '#f1f5f9',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  color: '#475569',
                   cursor: 'pointer',
-                  padding: '4px'
+                  padding: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
@@ -1678,7 +2285,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
               padding: '24px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '16px'
+              gap: '16px',
+              background: '#ffffff'
             }}>
               {Object.keys(cart).length === 0 ? (
                 <div style={{
@@ -1687,13 +2295,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'var(--text-muted)',
+                  color: '#64748b',
                   textAlign: 'center',
                   gap: '12px'
                 }}>
-                  <ShoppingBag size={48} />
-                  <p style={{ margin: 0, fontSize: '15px' }}>Your shopping cart is empty</p>
-                  <p style={{ margin: 0, fontSize: '13px', opacity: 0.7 }}>Add products from the store to check them out here.</p>
+                  <ShoppingBag size={48} style={{ color: '#94a3b8' }} />
+                  <p style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>Your shopping cart is empty</p>
+                  <p style={{ margin: 0, fontSize: '13.5px', color: '#64748b' }}>Add products from the store to check them out here.</p>
                 </div>
               ) : (
                 Object.entries(cart).map(([productId, quantity]) => {
@@ -1706,17 +2314,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                       display: 'flex',
                       gap: '12px',
                       padding: '16px',
-                      background: 'rgba(255, 255, 255, 0.02)',
-                      border: '1px solid var(--border-card)',
-                      borderRadius: '12px',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '14px',
                       alignItems: 'center'
                     }}>
                       {/* Image */}
                       <div style={{
                         width: '60px',
                         height: '60px',
-                        borderRadius: '8px',
-                        background: 'rgba(255, 255, 255, 0.03)',
+                        borderRadius: '10px',
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1726,7 +2335,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                         {product.image ? (
                           <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
-                          <ShoppingBag size={20} style={{ color: 'var(--text-muted)' }} />
+                          <ShoppingBag size={20} style={{ color: '#94a3b8' }} />
                         )}
                       </div>
 
@@ -1735,20 +2344,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                         <h5 style={{
                           margin: '0 0 4px',
                           fontSize: '14px',
-                          fontWeight: 600,
-                          color: 'var(--text-primary)',
+                          fontWeight: 700,
+                          color: '#0f172a',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis'
                         }}>{product.name}</h5>
-                        <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'var(--primary-300)' }}>
+                        <p style={{ margin: 0, fontSize: '14px', fontWeight: 800, color: '#4338ca' }}>
                           ₹{product.price}
                         </p>
                       </div>
 
                       {/* Actions/Quantity */}
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', padding: '2px 6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '3px 8px' }}>
                           <button 
                             onClick={() => {
                               if (quantity > 1) {
@@ -1759,9 +2368,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                                 setCart(newCart);
                               }
                             }}
-                            style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                            style={{ background: 'none', border: 'none', color: '#0f172a', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', fontWeight: 700 }}
                           >-</button>
-                          <span style={{ fontSize: '13px', fontWeight: 600, minWidth: '16px', textAlign: 'center' }}>{quantity}</span>
+                          <span style={{ fontSize: '13px', fontWeight: 700, minWidth: '16px', textAlign: 'center', color: '#0f172a' }}>{quantity}</span>
                           <button 
                             onClick={() => {
                               if (quantity < product.stock) {
@@ -1772,7 +2381,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                                 setTimeout(() => setShowCartToast(false), 2000);
                               }
                             }}
-                            style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                            style={{ background: 'none', border: 'none', color: '#0f172a', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', fontWeight: 700 }}
                           >+</button>
                         </div>
                         <button 
@@ -1784,9 +2393,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                           style={{
                             background: 'none',
                             border: 'none',
-                            color: '#ef4444',
-                            fontSize: '11px',
-                            fontWeight: 500,
+                            color: '#dc2626',
+                            fontSize: '11.5px',
+                            fontWeight: 600,
                             cursor: 'pointer',
                             padding: 0
                           }}
@@ -1805,14 +2414,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
               <div style={{
                 padding: '24px',
                 borderTop: '1px solid var(--border-card)',
-                background: 'rgba(15, 12, 30, 0.6)',
+                background: '#f8fafc',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '16px'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Subtotal</span>
-                  <span style={{ fontSize: '20px', fontWeight: 700, color: 'white' }}>
+                  <span style={{ color: '#475569', fontSize: '14px', fontWeight: 600 }}>Subtotal</span>
+                  <span style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>
                     ₹{Object.entries(cart).reduce((sum, [productId, quantity]) => {
                       const product = products.find(p => p.id === Number(productId));
                       return sum + (product ? product.price * quantity : 0);
@@ -1825,11 +2434,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                   className="btn-primary"
                   style={{
                     width: '100%',
-                    padding: '12px',
-                    borderRadius: '10px',
-                    background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)',
-                    fontWeight: 600,
-                    fontSize: '14px',
+                    padding: '13px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%)',
+                    fontWeight: 700,
+                    fontSize: '15px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1840,14 +2449,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                     <div style={{
                       width: '18px',
                       height: '18px',
-                      border: '2px solid rgba(255,255,255,0.2)',
+                      border: '2px solid rgba(255,255,255,0.3)',
                       borderTop: '2px solid white',
                       borderRadius: '50%',
                       animation: 'spin 1s linear infinite'
                     }} />
                   ) : (
                     <>
-                      <Check size={16} />
+                      <Check size={18} />
                       <span>Place Order</span>
                     </>
                   )}

@@ -116,17 +116,17 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigateToLogi
           width: '64px',
           height: '64px',
           borderRadius: '16px',
-          background: 'linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%)',
+          background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)',
           margin: '0 auto 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 8px 16px rgba(139, 92, 246, 0.3)'
+          boxShadow: '0 8px 16px rgba(79, 70, 229, 0.3)'
         }}>
-          <Mail style={{ color: 'white', width: '28px', height: '28px' }} />
+          <Mail style={{ color: '#ffffff', width: '28px', height: '28px' }} />
         </div>
-        <h1 className="title">Reset Password</h1>
-        <p className="subtitle">
+        <h1 className="title" style={{ color: '#0f172a' }}>Reset Password</h1>
+        <p className="subtitle" style={{ color: '#475569' }}>
           {resetSuccess 
             ? 'Success!' 
             : resetToken 
@@ -145,11 +145,11 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigateToLogi
 
       {resetSuccess ? (
         <div style={{ textAlign: 'center', padding: '16px 0' }}>
-          <div style={{ color: '#10b981', display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+          <div style={{ color: '#059669', display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
             <CheckCircle2 size={48} />
           </div>
-          <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px', color: 'white' }}>Password Reset!</h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.6', marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#0f172a' }}>Password Reset!</h3>
+          <p style={{ color: '#475569', fontSize: '14px', lineHeight: '1.6', marginBottom: '24px' }}>
             Your password has been reset successfully. You can now use your new credentials to sign in.
           </p>
           <button 
@@ -165,26 +165,27 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigateToLogi
         <div>
           {/* Success Banner showing the Token */}
           <div style={{
-            background: 'rgba(16, 185, 129, 0.08)',
-            border: '1px solid rgba(16, 185, 129, 0.2)',
+            background: '#ecfdf5',
+            border: '1px solid #a7f3d0',
             borderRadius: '12px',
             padding: '16px',
             marginBottom: '24px',
           }}>
-            <p style={{ fontSize: '13px', color: '#34d399', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 500 }}>
+            <p style={{ fontSize: '13px', color: '#047857', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
               <CheckCircle2 size={16} /> {successMsg || 'Reset Token Generated'}
             </p>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <code style={{
                 flex: 1,
                 padding: '10px 12px',
-                background: 'rgba(0, 0, 0, 0.3)',
+                background: '#ffffff',
                 borderRadius: '8px',
-                color: 'white',
+                color: '#4338ca',
                 fontSize: '12px',
+                fontWeight: 600,
                 wordBreak: 'break-all',
                 fontFamily: 'monospace',
-                border: '1px solid var(--border-card)'
+                border: '1.5px solid #cbd5e1'
               }}>{resetToken}</code>
               <button
                 type="button"
@@ -195,7 +196,7 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigateToLogi
                   borderRadius: '8px',
                   padding: '10px',
                   cursor: 'pointer',
-                  color: 'white',
+                  color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -278,15 +279,23 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigateToLogi
               onClick={() => setResetToken('')}
               style={{
                 width: '100%',
-                background: 'none',
-                border: '1px solid var(--border-card)',
+                background: '#ffffff',
+                border: '1.5px solid #cbd5e1',
                 borderRadius: '12px',
                 padding: '12px',
-                color: 'var(--text-secondary)',
+                color: '#334155',
                 cursor: 'pointer',
-                fontWeight: 500,
+                fontWeight: 600,
                 fontSize: '14px',
                 transition: 'var(--transition-fast)'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = '#f8fafc';
+                e.currentTarget.style.borderColor = '#94a3b8';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = '#ffffff';
+                e.currentTarget.style.borderColor = '#cbd5e1';
               }}
               disabled={resetLoading}
             >
@@ -330,13 +339,13 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigateToLogi
             onClick={onNavigateToLogin}
             style={{
               width: '100%',
-              background: 'rgba(255, 255, 255, 0.02)',
-              border: '1px solid var(--border-card)',
+              background: '#ffffff',
+              border: '1.5px solid #cbd5e1',
               borderRadius: '12px',
               padding: '12px',
-              color: 'var(--text-secondary)',
+              color: '#334155',
               cursor: 'pointer',
-              fontWeight: 500,
+              fontWeight: 600,
               fontSize: '14px',
               display: 'flex',
               alignItems: 'center',
@@ -344,8 +353,14 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigateToLogi
               gap: '8px',
               transition: 'var(--transition-fast)'
             }}
-            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
-            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)'}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = '#f8fafc';
+              e.currentTarget.style.borderColor = '#94a3b8';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = '#ffffff';
+              e.currentTarget.style.borderColor = '#cbd5e1';
+            }}
             disabled={loading}
           >
             <ArrowLeft size={16} /> Cancel

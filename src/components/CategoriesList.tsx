@@ -67,7 +67,6 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
   const [editError, setEditError] = useState<string | null>(null);
 
   const startEditCategory = (id: number) => {
-    // Retrieve by ID from list data
     const categoryToEdit = categories.find((c) => c.id === id);
     if (categoryToEdit) {
       setEditingCategory(categoryToEdit);
@@ -166,8 +165,6 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
     });
   }, [categories, searchQuery]);
 
-
-
   return (
     <div style={{ width: '100%', animation: 'fade-in 0.4s ease-out' }}>
       {/* Header section with back button */}
@@ -176,43 +173,50 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
           <button
             onClick={onBack}
             style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--primary-300)',
-              fontSize: '14px',
-              fontWeight: 500,
+              background: '#ffffff',
+              border: '1.5px solid #cbd5e1',
+              color: 'var(--primary-600)',
+              fontSize: '13px',
+              fontWeight: 600,
               cursor: 'pointer',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              marginBottom: '10px',
-              padding: '4px 0',
+              marginBottom: '12px',
+              padding: '6px 14px',
+              borderRadius: '10px',
               transition: 'var(--transition-fast)'
             }}
-            onMouseOver={(e) => e.currentTarget.style.color = 'white'}
-            onMouseOut={(e) => e.currentTarget.style.color = 'var(--primary-300)'}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = '#f8fafc';
+              e.currentTarget.style.borderColor = 'var(--primary-500)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = '#ffffff';
+              e.currentTarget.style.borderColor = '#cbd5e1';
+            }}
           >
             ← Back to Storefront
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '42px',
-              height: '42px',
+              width: '44px',
+              height: '44px',
               borderRadius: '12px',
-              background: 'rgba(139, 92, 246, 0.1)',
-              border: '1px solid rgba(139, 92, 246, 0.2)',
+              background: '#ede9fe',
+              border: '1px solid #c7d2fe',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--primary-400)'
+              color: 'var(--primary-600)'
             }}>
               <Tag size={22} />
             </div>
             <div>
-              <h2 style={{ fontSize: '24px', fontWeight: 700, margin: 0, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: 700, margin: 0, color: '#0f172a', fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
                 Product Categories
               </h2>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
+              <p style={{ fontSize: '13px', color: '#475569', margin: '2px 0 0 0' }}>
                 Manage product categorization and metadata details
               </p>
             </div>
@@ -225,7 +229,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             style={{
               background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)',
               border: 'none',
-              color: 'white',
+              color: '#ffffff',
               padding: '10px 18px',
               borderRadius: '12px',
               fontSize: '13px',
@@ -234,13 +238,13 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              boxShadow: '0 4px 12px rgba(124, 58, 237, 0.2)',
+              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)',
               transition: 'var(--transition-fast)'
             }}
             onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
             onMouseOut={(e) => e.currentTarget.style.transform = 'none'}
           >
-            <Plus size={14} />
+            <Plus size={15} />
             <span>Create Category</span>
           </button>
 
@@ -248,13 +252,13 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             onClick={fetchCategories}
             disabled={loading}
             style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid var(--border-card)',
-              color: 'var(--text-primary)',
+              background: '#ffffff',
+              border: '1.5px solid #cbd5e1',
+              color: '#1e293b',
               padding: '10px 18px',
               borderRadius: '12px',
               fontSize: '13px',
-              fontWeight: 500,
+              fontWeight: 600,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -262,10 +266,16 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
               transition: 'var(--transition-fast)'
             }}
             onMouseOver={(e) => {
-              if (!loading) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+              if (!loading) {
+                e.currentTarget.style.background = '#f8fafc';
+                e.currentTarget.style.borderColor = 'var(--primary-500)';
+              }
             }}
             onMouseOut={(e) => {
-              if (!loading) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+              if (!loading) {
+                e.currentTarget.style.background = '#ffffff';
+                e.currentTarget.style.borderColor = '#cbd5e1';
+              }
             }}
           >
             <RefreshCw size={14} className={loading ? 'spin-animation' : ''} />
@@ -276,8 +286,8 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
 
       {/* Search & Filter Bar */}
       <div style={{
-        background: 'rgba(15, 12, 30, 0.4)',
-        border: '1px solid var(--border-card)',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
         borderRadius: '16px',
         padding: '16px 20px',
         marginBottom: '24px',
@@ -285,11 +295,12 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
         flexWrap: 'wrap',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '16px'
+        gap: '16px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
       }}>
         {/* Search */}
         <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: '400px' }}>
-          <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
           <input
             type="text"
             placeholder="Search by category name, description..."
@@ -297,15 +308,17 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
               width: '100%',
-              background: 'rgba(255, 255, 255, 0.02)',
-              border: '1px solid var(--border-card)',
+              background: '#f8fafc',
+              border: '1.5px solid #cbd5e1',
               borderRadius: '24px',
               padding: '10px 16px 10px 42px',
               fontSize: '14px',
-              color: 'white',
+              color: '#0f172a',
               outline: 'none',
               transition: 'var(--transition-smooth)'
             }}
+            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--primary-600)'}
+            onBlur={(e) => e.currentTarget.style.borderColor = '#cbd5e1'}
           />
           {searchQuery && (
             <button
@@ -317,7 +330,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                 transform: 'translateY(-50%)',
                 background: 'none',
                 border: 'none',
-                color: 'var(--text-muted)',
+                color: '#64748b',
                 cursor: 'pointer'
               }}
             >
@@ -330,45 +343,46 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
       {/* Main Content Grid / Table */}
       {loading ? (
         <div style={{
-          background: 'rgba(15, 12, 30, 0.2)',
-          border: '1px solid var(--border-card)',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
           borderRadius: '20px',
           padding: '48px 24px',
-          textAlign: 'center'
+          textAlign: 'center',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
         }}>
           <div className="spin-animation" style={{
             width: '32px',
             height: '32px',
-            border: '3px solid rgba(139, 92, 246, 0.1)',
-            borderTop: '3px solid var(--primary-500)',
+            border: '3px solid #ede9fe',
+            borderTop: '3px solid var(--primary-600)',
             borderRadius: '50%',
             margin: '0 auto 16px'
           }} />
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Loading platform categories...</p>
+          <p style={{ color: '#475569', fontSize: '14px', fontWeight: 500 }}>Loading platform categories...</p>
         </div>
       ) : error ? (
         <div style={{
-          background: 'rgba(239, 68, 68, 0.05)',
-          border: '1px solid rgba(239, 68, 68, 0.15)',
+          background: '#fef2f2',
+          border: '1px solid #fecaca',
           borderRadius: '20px',
           padding: '32px 24px',
           textAlign: 'center',
           maxWidth: '480px',
           margin: '0 auto'
         }}>
-          <AlertCircle size={36} style={{ color: 'var(--error)', marginBottom: '12px' }} />
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#f87171', marginBottom: '6px' }}>Failed to retrieve categories</h3>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>{error}</p>
+          <AlertCircle size={36} style={{ color: '#dc2626', marginBottom: '12px' }} />
+          <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#991b1b', marginBottom: '6px' }}>Failed to retrieve categories</h3>
+          <p style={{ fontSize: '13px', color: '#b91c1c', marginBottom: '16px' }}>{error}</p>
           <button
             onClick={fetchCategories}
             style={{
               background: 'var(--primary-600)',
               border: 'none',
-              color: 'white',
+              color: '#ffffff',
               padding: '8px 18px',
               borderRadius: '8px',
               fontSize: '13px',
-              fontWeight: 500,
+              fontWeight: 600,
               cursor: 'pointer'
             }}
           >
@@ -377,34 +391,33 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
         </div>
       ) : filteredCategories.length === 0 ? (
         <div style={{
-          background: 'rgba(15, 12, 30, 0.2)',
-          border: '1px dashed var(--border-card)',
+          background: '#ffffff',
+          border: '2px dashed #cbd5e1',
           borderRadius: '20px',
           padding: '48px 24px',
           textAlign: 'center'
         }}>
-          <Tag size={36} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
-          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>No categories found</h3>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '320px', margin: '0 auto' }}>
+          <Tag size={36} style={{ color: '#94a3b8', marginBottom: '12px' }} />
+          <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>No categories found</h3>
+          <p style={{ fontSize: '13px', color: '#64748b', maxWidth: '320px', margin: '0 auto' }}>
             We couldn't find any categories matching your search query.
           </p>
         </div>
       ) : (
         <div style={{
-          background: 'rgba(15, 12, 30, 0.3)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid var(--border-card)',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
           borderRadius: '20px',
           overflow: 'hidden',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)'
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
         }}>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--border-card)', background: 'rgba(255, 255, 255, 0.01)' }}>
-                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category Details</th>
-                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Description</th>
-                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Actions</th>
+                <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category Details</th>
+                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Description</th>
+                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -413,10 +426,10 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                     <tr
                       key={category.id}
                       style={{
-                        borderBottom: '1px solid var(--border-card)',
+                        borderBottom: '1px solid #e2e8f0',
                         transition: 'background 0.2s ease'
                       }}
-                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)'}
+                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
                       onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       {/* Name Details */}
@@ -426,22 +439,22 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                             width: '40px',
                             height: '40px',
                             borderRadius: '12px',
-                            background: 'rgba(139, 92, 246, 0.08)',
-                            border: '1px solid rgba(139, 92, 246, 0.15)',
+                            background: '#ede9fe',
+                            border: '1px solid #c7d2fe',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: '14px',
                             fontWeight: 600,
-                            color: 'var(--primary-300)'
+                            color: 'var(--primary-600)'
                           }}>
                             <FolderOpen size={16} />
                           </div>
                           <div>
-                            <div style={{ fontWeight: 600, color: 'white', fontSize: '14px' }}>
+                            <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>
                               {category.name}
                             </div>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '2px' }}>
+                            <div style={{ color: '#64748b', fontSize: '12px', marginTop: '2px', fontWeight: 500 }}>
                               ID: #{category.id}
                             </div>
                           </div>
@@ -449,8 +462,8 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                       </td>
 
                       {/* Description */}
-                      <td style={{ padding: '16px 24px', fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {category.description || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No description</span>}
+                      <td style={{ padding: '16px 24px', fontSize: '13px', color: '#475569', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {category.description || <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>No description</span>}
                       </td>
 
                       {/* Actions */}
@@ -463,11 +476,11 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                             }}
                             title="Edit Category"
                             style={{
-                              background: 'rgba(255, 255, 255, 0.03)',
-                              border: '1px solid var(--border-card)',
+                              background: '#f8fafc',
+                              border: '1.5px solid #cbd5e1',
                               borderRadius: '8px',
                               padding: '6px 10px',
-                              color: 'var(--primary-300)',
+                              color: 'var(--primary-600)',
                               cursor: 'pointer',
                               display: 'inline-flex',
                               alignItems: 'center',
@@ -475,10 +488,12 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                               transition: 'var(--transition-fast)'
                             }}
                             onMouseOver={(e) => {
-                              e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)';
+                              e.currentTarget.style.background = '#ede9fe';
+                              e.currentTarget.style.borderColor = '#818cf8';
                             }}
                             onMouseOut={(e) => {
-                              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                              e.currentTarget.style.background = '#f8fafc';
+                              e.currentTarget.style.borderColor = '#cbd5e1';
                             }}
                           >
                             <Edit2 size={14} />
@@ -491,11 +506,11 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                             }}
                             title="Delete Category"
                             style={{
-                              background: 'rgba(239, 68, 68, 0.1)',
-                              border: '1px solid rgba(239, 68, 68, 0.2)',
+                              background: '#fef2f2',
+                              border: '1.5px solid #fecaca',
                               borderRadius: '8px',
                               padding: '6px 10px',
-                              color: '#fca5a5',
+                              color: '#dc2626',
                               cursor: 'pointer',
                               display: 'inline-flex',
                               alignItems: 'center',
@@ -503,10 +518,12 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                               transition: 'var(--transition-fast)'
                             }}
                             onMouseOver={(e) => {
-                              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
+                              e.currentTarget.style.background = '#fee2e2';
+                              e.currentTarget.style.borderColor = '#f87171';
                             }}
                             onMouseOut={(e) => {
-                              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                              e.currentTarget.style.background = '#fef2f2';
+                              e.currentTarget.style.borderColor = '#fecaca';
                             }}
                           >
                             <Trash2 size={14} />
@@ -520,40 +537,42 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             </table>
           </div>
           {/* Pagination Controls */}
-          <div style={{ padding: '16px 24px', background: 'rgba(255, 255, 255, 0.01)', borderTop: '1px solid var(--border-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+          <div style={{ padding: '16px 24px', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+            <span style={{ fontSize: '13px', color: '#475569' }}>
               Showing <strong>{filteredCategories.length}</strong> of <strong>{totalElements}</strong> categories
             </span>
             {totalPages > 1 && (
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <button
                   disabled={page === 0}
                   onClick={() => setPage((p) => p - 1)}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--border-card)',
-                    color: page === 0 ? 'var(--text-muted)' : 'white',
+                    background: '#ffffff',
+                    border: '1.5px solid #cbd5e1',
+                    color: page === 0 ? '#94a3b8' : '#1e293b',
                     padding: '6px 12px',
                     borderRadius: '8px',
                     fontSize: '12px',
+                    fontWeight: 600,
                     cursor: page === 0 ? 'not-allowed' : 'pointer'
                   }}
                 >
                   Previous
                 </button>
-                <span style={{ fontSize: '13px', color: 'white', display: 'flex', alignItems: 'center', padding: '0 8px' }}>
+                <span style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, display: 'flex', alignItems: 'center', padding: '0 8px' }}>
                   Page {page + 1} of {totalPages}
                 </span>
                 <button
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage((p) => p + 1)}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--border-card)',
-                    color: page >= totalPages - 1 ? 'var(--text-muted)' : 'white',
+                    background: '#ffffff',
+                    border: '1.5px solid #cbd5e1',
+                    color: page >= totalPages - 1 ? '#94a3b8' : '#1e293b',
                     padding: '6px 12px',
                     borderRadius: '8px',
                     fontSize: '12px',
+                    fontWeight: 600,
                     cursor: page >= totalPages - 1 ? 'not-allowed' : 'pointer'
                   }}
                 >
@@ -573,8 +592,8 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
           right: 0,
           bottom: 0,
           zIndex: 1100,
-          background: 'rgba(3, 0, 20, 0.6)',
-          backdropFilter: 'blur(10px)',
+          background: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -587,12 +606,12 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
         }}
         >
           <div style={{
-            background: 'rgba(15, 12, 30, 0.95)',
-            border: '1px solid var(--border-card)',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
             borderRadius: '24px',
             width: '100%',
             maxWidth: '480px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(139, 92, 246, 0.15)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             overflow: 'hidden',
             animation: 'scale-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}
@@ -604,11 +623,11 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '20px 24px',
-              borderBottom: '1px solid var(--border-card)',
-              background: 'rgba(255, 255, 255, 0.01)'
+              borderBottom: '1px solid #e2e8f0',
+              background: '#f8fafc'
             }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Plus size={18} style={{ color: 'var(--primary-400)' }} />
+              <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, color: '#0f172a', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Plus size={18} style={{ color: 'var(--primary-600)' }} />
                 <span>Create New Category</span>
               </h3>
               <button
@@ -619,7 +638,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--text-secondary)',
+                  color: '#64748b',
                   cursor: 'pointer',
                   padding: '4px',
                   borderRadius: '50%',
@@ -629,12 +648,12 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                   transition: 'var(--transition-fast)'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.color = 'white';
+                  e.currentTarget.style.background = '#e2e8f0';
+                  e.currentTarget.style.color = '#0f172a';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.background = 'none';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
+                  e.currentTarget.style.color = '#64748b';
                 }}
               >
                 <X size={18} />
@@ -646,12 +665,13 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
               <div style={{ padding: '24px' }}>
                 {createError && (
                   <div style={{
-                    background: 'rgba(239, 68, 68, 0.05)',
-                    border: '1px solid rgba(239, 68, 68, 0.15)',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
                     borderRadius: '12px',
                     padding: '12px 16px',
-                    color: '#f87171',
+                    color: '#dc2626',
                     fontSize: '13px',
+                    fontWeight: 500,
                     marginBottom: '20px',
                     display: 'flex',
                     alignItems: 'center',
@@ -663,23 +683,22 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                 )}
 
                 <div className="form-group" style={{ marginBottom: '20px' }}>
-                  <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
-                    Category Name <span style={{ color: 'var(--error)' }}>*</span>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
+                    Category Name <span style={{ color: '#dc2626' }}>*</span>
                   </label>
                   <input
                     type="text"
                     placeholder="e.g. Electronics, Home & Kitchen"
-                    className="form-input"
                     value={createName}
                     onChange={(e) => setCreateName(e.target.value)}
                     disabled={createLoading}
                     style={{
                       width: '100%',
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid var(--border-card)',
+                      background: '#ffffff',
+                      border: '1.5px solid #cbd5e1',
                       borderRadius: '10px',
                       padding: '12px 14px',
-                      color: 'white',
+                      color: '#0f172a',
                       fontSize: '14px',
                       outline: 'none'
                     }}
@@ -687,23 +706,22 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                 </div>
 
                 <div className="form-group" style={{ marginBottom: '8px' }}>
-                  <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
                     Description
                   </label>
                   <textarea
                     placeholder="Provide a brief description of products in this category..."
-                    className="form-input"
                     value={createDescription}
                     onChange={(e) => setCreateDescription(e.target.value)}
                     disabled={createLoading}
                     rows={4}
                     style={{
                       width: '100%',
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid var(--border-card)',
+                      background: '#ffffff',
+                      border: '1.5px solid #cbd5e1',
                       borderRadius: '10px',
                       padding: '12px 14px',
-                      color: 'white',
+                      color: '#0f172a',
                       fontSize: '14px',
                       outline: 'none',
                       resize: 'vertical',
@@ -716,8 +734,8 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
               {/* Modal Footer */}
               <div style={{
                 padding: '16px 24px',
-                borderTop: '1px solid var(--border-card)',
-                background: 'rgba(255, 255, 255, 0.01)',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
                 display: 'flex',
                 justifyContent: 'flex-end',
                 gap: '12px'
@@ -730,13 +748,13 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                   }}
                   disabled={createLoading}
                   style={{
-                    background: 'none',
-                    border: '1px solid var(--border-card)',
-                    color: 'white',
+                    background: '#ffffff',
+                    border: '1.5px solid #cbd5e1',
+                    color: '#334155',
                     padding: '8px 16px',
                     borderRadius: '10px',
                     fontSize: '13px',
-                    fontWeight: 500,
+                    fontWeight: 600,
                     cursor: 'pointer'
                   }}
                 >
@@ -745,16 +763,16 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                 <button
                   type="submit"
                   disabled={createLoading}
-                  className="btn-primary"
                   style={{
                     padding: '8px 20px',
                     fontSize: '13px',
                     borderRadius: '10px',
                     background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)',
                     border: 'none',
-                    color: 'white',
+                    color: '#ffffff',
                     fontWeight: 600,
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)'
                   }}
                 >
                   {createLoading ? 'Creating...' : 'Create Category'}
@@ -773,8 +791,8 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
           right: 0,
           bottom: 0,
           zIndex: 1100,
-          background: 'rgba(3, 0, 20, 0.6)',
-          backdropFilter: 'blur(10px)',
+          background: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -787,12 +805,12 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
         }}
         >
           <div style={{
-            background: 'rgba(15, 12, 30, 0.95)',
-            border: '1px solid var(--border-card)',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
             borderRadius: '24px',
             width: '100%',
             maxWidth: '480px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(139, 92, 246, 0.15)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             overflow: 'hidden',
             animation: 'scale-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}
@@ -804,11 +822,11 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '20px 24px',
-              borderBottom: '1px solid var(--border-card)',
-              background: 'rgba(255, 255, 255, 0.01)'
+              borderBottom: '1px solid #e2e8f0',
+              background: '#f8fafc'
             }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Edit2 size={18} style={{ color: 'var(--primary-400)' }} />
+              <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, color: '#0f172a', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Edit2 size={18} style={{ color: 'var(--primary-600)' }} />
                 <span>Edit Category Details</span>
               </h3>
               <button
@@ -819,7 +837,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--text-secondary)',
+                  color: '#64748b',
                   cursor: 'pointer',
                   padding: '4px',
                   borderRadius: '50%',
@@ -829,12 +847,12 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                   transition: 'var(--transition-fast)'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.color = 'white';
+                  e.currentTarget.style.background = '#e2e8f0';
+                  e.currentTarget.style.color = '#0f172a';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.background = 'none';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
+                  e.currentTarget.style.color = '#64748b';
                 }}
               >
                 <X size={18} />
@@ -846,12 +864,13 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
               <div style={{ padding: '24px' }}>
                 {editError && (
                   <div style={{
-                    background: 'rgba(239, 68, 68, 0.05)',
-                    border: '1px solid rgba(239, 68, 68, 0.15)',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
                     borderRadius: '12px',
                     padding: '12px 16px',
-                    color: '#f87171',
+                    color: '#dc2626',
                     fontSize: '13px',
+                    fontWeight: 500,
                     marginBottom: '20px',
                     display: 'flex',
                     alignItems: 'center',
@@ -863,23 +882,22 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                 )}
 
                 <div className="form-group" style={{ marginBottom: '20px' }}>
-                  <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
-                    Category Name <span style={{ color: 'var(--error)' }}>*</span>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
+                    Category Name <span style={{ color: '#dc2626' }}>*</span>
                   </label>
                   <input
                     type="text"
                     placeholder="e.g. Electronics, Home & Kitchen"
-                    className="form-input"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     disabled={editLoading}
                     style={{
                       width: '100%',
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid var(--border-card)',
+                      background: '#ffffff',
+                      border: '1.5px solid #cbd5e1',
                       borderRadius: '10px',
                       padding: '12px 14px',
-                      color: 'white',
+                      color: '#0f172a',
                       fontSize: '14px',
                       outline: 'none'
                     }}
@@ -887,23 +905,22 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                 </div>
 
                 <div className="form-group" style={{ marginBottom: '8px' }}>
-                  <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
                     Description
                   </label>
                   <textarea
                     placeholder="Provide a brief description of products in this category..."
-                    className="form-input"
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
                     disabled={editLoading}
                     rows={4}
                     style={{
                       width: '100%',
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid var(--border-card)',
+                      background: '#ffffff',
+                      border: '1.5px solid #cbd5e1',
                       borderRadius: '10px',
                       padding: '12px 14px',
-                      color: 'white',
+                      color: '#0f172a',
                       fontSize: '14px',
                       outline: 'none',
                       resize: 'vertical',
@@ -916,8 +933,8 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
               {/* Modal Footer */}
               <div style={{
                 padding: '16px 24px',
-                borderTop: '1px solid var(--border-card)',
-                background: 'rgba(255, 255, 255, 0.01)',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
                 display: 'flex',
                 justifyContent: 'flex-end',
                 gap: '12px'
@@ -930,13 +947,13 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                   }}
                   disabled={editLoading}
                   style={{
-                    background: 'none',
-                    border: '1px solid var(--border-card)',
-                    color: 'white',
+                    background: '#ffffff',
+                    border: '1.5px solid #cbd5e1',
+                    color: '#334155',
                     padding: '8px 16px',
                     borderRadius: '10px',
                     fontSize: '13px',
-                    fontWeight: 500,
+                    fontWeight: 600,
                     cursor: 'pointer'
                   }}
                 >
@@ -945,16 +962,16 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                 <button
                   type="submit"
                   disabled={editLoading}
-                  className="btn-primary"
                   style={{
                     padding: '8px 20px',
                     fontSize: '13px',
                     borderRadius: '10px',
                     background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)',
                     border: 'none',
-                    color: 'white',
+                    color: '#ffffff',
                     fontWeight: 600,
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)'
                   }}
                 >
                   {editLoading ? 'Saving...' : 'Save Changes'}
@@ -973,8 +990,8 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
           right: 0,
           bottom: 0,
           zIndex: 1100,
-          background: 'rgba(3, 0, 20, 0.6)',
-          backdropFilter: 'blur(10px)',
+          background: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -987,12 +1004,12 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
         }}
         >
           <div style={{
-            background: 'rgba(15, 12, 30, 0.95)',
-            border: '1px solid var(--border-card)',
+            background: '#ffffff',
+            border: '1px solid #fecaca',
             borderRadius: '24px',
             width: '100%',
             maxWidth: '440px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(239, 68, 68, 0.1)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             overflow: 'hidden',
             animation: 'scale-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}
@@ -1004,10 +1021,10 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '20px 24px',
-              borderBottom: '1px solid var(--border-card)',
-              background: 'rgba(255, 255, 255, 0.01)'
+              borderBottom: '1px solid #e2e8f0',
+              background: '#f8fafc'
             }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '8px', color: '#dc2626' }}>
                 <Trash2 size={18} />
                 <span>Delete Category</span>
               </h3>
@@ -1019,7 +1036,7 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--text-secondary)',
+                  color: '#64748b',
                   cursor: 'pointer',
                   padding: '4px',
                   borderRadius: '50%',
@@ -1029,12 +1046,12 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                   transition: 'var(--transition-fast)'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.color = 'white';
+                  e.currentTarget.style.background = '#e2e8f0';
+                  e.currentTarget.style.color = '#0f172a';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.background = 'none';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
+                  e.currentTarget.style.color = '#64748b';
                 }}
               >
                 <X size={18} />
@@ -1045,12 +1062,13 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             <div style={{ padding: '24px' }}>
               {deleteError && (
                 <div style={{
-                  background: 'rgba(239, 68, 68, 0.05)',
-                  border: '1px solid rgba(239, 68, 68, 0.15)',
+                  background: '#fef2f2',
+                  border: '1px solid #fecaca',
                   borderRadius: '12px',
                   padding: '12px 16px',
-                  color: '#f87171',
+                  color: '#dc2626',
                   fontSize: '13px',
+                  fontWeight: 500,
                   marginBottom: '20px',
                   display: 'flex',
                   alignItems: 'center',
@@ -1061,10 +1079,10 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                 </div>
               )}
 
-              <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
-                Are you sure you want to delete the category <strong style={{ color: 'white' }}>{deletingCategory.name}</strong>?
+              <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.6, color: '#475569' }}>
+                Are you sure you want to delete the category <strong style={{ color: '#0f172a' }}>{deletingCategory.name}</strong>?
               </p>
-              <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#fca5a5' }}>
+              <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#dc2626', fontWeight: 500 }}>
                 Warning: This action is permanent and cannot be undone.
               </p>
             </div>
@@ -1072,8 +1090,8 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
             {/* Modal Footer */}
             <div style={{
               padding: '16px 24px',
-              borderTop: '1px solid var(--border-card)',
-              background: 'rgba(255, 255, 255, 0.01)',
+              borderTop: '1px solid #e2e8f0',
+              background: '#f8fafc',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: '12px'
@@ -1086,13 +1104,13 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                 }}
                 disabled={deleteLoading}
                 style={{
-                  background: 'none',
-                  border: '1px solid var(--border-card)',
-                  color: 'white',
+                  background: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                  color: '#334155',
                   padding: '8px 16px',
                   borderRadius: '10px',
                   fontSize: '13px',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   cursor: 'pointer'
                 }}
               >
@@ -1106,12 +1124,15 @@ export const CategoriesList: React.FC<CategoriesListProps> = ({ token, onBack })
                   padding: '8px 20px',
                   fontSize: '13px',
                   borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+                  background: '#dc2626',
                   border: 'none',
-                  color: 'white',
+                  color: '#ffffff',
                   fontWeight: 600,
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  transition: 'var(--transition-fast)'
                 }}
+                onMouseOver={(e) => e.currentTarget.style.background = '#b91c1c'}
+                onMouseOut={(e) => e.currentTarget.style.background = '#dc2626'}
               >
                 {deleteLoading ? 'Deleting...' : 'Delete Category'}
               </button>

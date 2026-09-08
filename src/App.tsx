@@ -12,6 +12,12 @@ export const App: React.FC = () => {
   const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
+    // Ensure light theme is consistently active
+    document.documentElement.removeAttribute('data-theme');
+    document.body.classList.remove('theme-dark');
+    document.body.classList.add('theme-light');
+    localStorage.removeItem('app_theme');
+
     const checkToken = async () => {
       const storedToken = localStorage.getItem('accessToken');
       const storedEmail = localStorage.getItem('userEmail');
