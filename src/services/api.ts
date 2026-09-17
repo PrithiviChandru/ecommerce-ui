@@ -1,6 +1,6 @@
 // E-commerce API Client Configuration
-const API_BASE_URL = 'https://ecommerce-api-vy20.onrender.com/api';
-// const API_BASE_URL = 'http://localhost:8081/api';
+// const API_BASE_URL = 'https://ecommerce-api-vy20.onrender.com/api';
+const API_BASE_URL = 'http://localhost:8081/api';
 
 export interface User {
   id: string;
@@ -115,6 +115,96 @@ export interface DeleteUserResponse {
     userId: number;
     message: string;
   };
+  errors: any;
+  timeStamp: string;
+}
+
+export interface OrderItemInput {
+  productId: number;
+  quantity: number;
+}
+
+export interface CreateOrderPayload {
+  items: OrderItemInput[];
+}
+
+export interface OrderItemDetail {
+  productId: number;
+  productName: string;
+  quantity: number;
+  price: number;
+  subTotal: number;
+}
+
+export interface OrderData {
+  id: number;
+  userId: number;
+  userName: string;
+  items: OrderItemDetail[];
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+}
+
+export interface PaginatedOrders {
+  content: OrderData[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+  last?: boolean;
+}
+
+export interface OrdersResponse {
+  apiStatus: boolean;
+  message: string;
+  data: OrderData[] | PaginatedOrders | any;
+  errors: any;
+  timeStamp: string;
+}
+
+export interface SingleOrderResponse {
+  apiStatus: boolean;
+  message: string;
+  data: OrderData;
+  errors: any;
+  timeStamp: string;
+}
+
+export interface PaymentData {
+  id: number;
+  orderId: number;
+  amount: number;
+  paymentMethod: string;
+  paymentStatus: string;
+  transactionId?: string;
+  orderStatus?: string;
+  razorpayOrderId?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface PaginatedPayments {
+  content: PaymentData[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+  last?: boolean;
+}
+
+export interface PaymentsResponse {
+  apiStatus: boolean;
+  message: string;
+  data: PaymentData[] | PaginatedPayments | any;
+  errors: any;
+  timeStamp: string;
+}
+
+export interface SinglePaymentResponse {
+  apiStatus: boolean;
+  message: string;
+  data: PaymentData;
   errors: any;
   timeStamp: string;
 }
@@ -456,36 +546,37 @@ export const api = {
   /**
    * Place a new order
    */
-  async createOrder(token: string, payload: { productId: number; quantity: number }): Promise<any> {
+  async createOrder(token: string, payload: CreateOrderPayload | { productId: number; quantity: number }): Promise<SingleOrderResponse> {
+    const formattedPayload: CreateOrderPayload = 'items' in payload ? payload : { items: [payload] };
     const response = await fetch(`${API_BASE_URL}/orders`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(formattedPayload)
     });
-    return await handleResponse<any>(response);
+    return await handleResponse<SingleOrderResponse>(response);
   },
 
   /**
    * Fetch all orders for the current user
    */
-  async getOrders(token: string): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/orders/my`, {
+  async getOrders(token: string, page = 0, size = 50, sortBy = 'id', sortDir = 'asc'): Promise<OrdersResponse> {
+    const response = await fetch(`${API_BASE_URL}/orders/my?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       }
     });
-    return await handleResponse<any>(response);
+    return await handleResponse<OrdersResponse>(response);
   },
 
   /**
    * Fetch individual order detail by ID
    */
-  async getOrderById(token: string, orderId: number): Promise<any> {
+  async getOrderById(token: string, orderId: number | string): Promise<SingleOrderResponse> {
     const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
       method: 'GET',
       headers: {
@@ -493,41 +584,41 @@ export const api = {
         'Authorization': `Bearer ${token}`
       }
     });
-    return await handleResponse<any>(response);
+    return await handleResponse<SingleOrderResponse>(response);
   },
 
   /**
    * Cancel an order by ID
    */
-  async cancelOrder(token: string, orderId: number): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
+  async cancelOrder(token: string, orderId: number | string): Promise<SingleOrderResponse> {
+    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/cancel`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       }
     });
-    return await handleResponse<any>(response);
+    return await handleResponse<SingleOrderResponse>(response);
   },
 
   /**
    * Fetch all orders in the system (Admin only)
    */
-  async getAllOrders(token: string): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/orders`, {
+  async getAllOrders(token: string, page = 0, size = 50, sortBy = 'id', sortDir = 'asc'): Promise<OrdersResponse> {
+    const response = await fetch(`${API_BASE_URL}/orders?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       }
     });
-    return await handleResponse<any>(response);
+    return await handleResponse<OrdersResponse>(response);
   },
 
   /**
    * Make a payment for an order
    */
-  async makePayment(token: string, payload: { orderId: number; paymentMethod: string }): Promise<any> {
+  async makePayment(token: string, payload: { orderId: number; paymentMethod: string }): Promise<SinglePaymentResponse> {
     const response = await fetch(`${API_BASE_URL}/payments/pay`, {
       method: 'POST',
       headers: {
@@ -536,20 +627,34 @@ export const api = {
       },
       body: JSON.stringify(payload)
     });
-    return await handleResponse<any>(response);
+    return await handleResponse<SinglePaymentResponse>(response);
   },
 
   /**
    * Fetch all payments for the current user
    */
-  async getMyPayments(token: string): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/payments/my`, {
+  async getMyPayments(token: string, page = 0, size = 50, sortBy = 'id', sortDir = 'asc'): Promise<PaymentsResponse> {
+    const response = await fetch(`${API_BASE_URL}/payments/my?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       }
     });
-    return await handleResponse<any>(response);
+    return await handleResponse<PaymentsResponse>(response);
+  },
+
+  /**
+   * Fetch individual payment detail by ID
+   */
+  async getPaymentById(token: string, paymentId: number | string): Promise<SinglePaymentResponse> {
+    const response = await fetch(`${API_BASE_URL}/payments/${paymentId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return await handleResponse<SinglePaymentResponse>(response);
   }
 };
