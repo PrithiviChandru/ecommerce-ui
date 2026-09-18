@@ -1,6 +1,6 @@
 // E-commerce API Client Configuration
-// const API_BASE_URL = 'https://ecommerce-api-vy20.onrender.com/api';
-const API_BASE_URL = 'http://localhost:8081/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
+export const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TdNWU37S2ChC6s';
 
 export interface User {
   id: string;
@@ -179,7 +179,14 @@ export interface PaymentData {
   paymentStatus: string;
   transactionId?: string;
   orderStatus?: string;
+  userName?: string;
+  userEmail?: string;
   razorpayOrderId?: string;
+  razorpayodreid?: string;
+  razorpayKeyId?: string;
+  razorpayTestKeyId?: string;
+  razorpaytestkeyid?: string;
+  keyId?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -208,6 +215,28 @@ export interface SinglePaymentResponse {
   errors: any;
   timeStamp: string;
 }
+
+export interface VerifyPaymentPayload {
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+  orderId?: number;
+}
+
+export const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && (window as any).Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 export const api = {
   /**
@@ -562,7 +591,7 @@ export const api = {
   /**
    * Fetch all orders for the current user
    */
-  async getOrders(token: string, page = 0, size = 50, sortBy = 'id', sortDir = 'asc'): Promise<OrdersResponse> {
+  async getOrders(token: string, page = 0, size = 50, sortBy = 'id', sortDir = 'desc'): Promise<OrdersResponse> {
     const response = await fetch(`${API_BASE_URL}/orders/my?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`, {
       method: 'GET',
       headers: {
@@ -633,7 +662,7 @@ export const api = {
   /**
    * Fetch all payments for the current user
    */
-  async getMyPayments(token: string, page = 0, size = 50, sortBy = 'id', sortDir = 'asc'): Promise<PaymentsResponse> {
+  async getMyPayments(token: string, page = 0, size = 50, sortBy = 'id', sortDir = 'desc'): Promise<PaymentsResponse> {
     const response = await fetch(`${API_BASE_URL}/payments/my?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`, {
       method: 'GET',
       headers: {
@@ -654,6 +683,21 @@ export const api = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       }
+    });
+    return await handleResponse<SinglePaymentResponse>(response);
+  },
+
+  /**
+   * Verify Razorpay Payment Signature
+   */
+  async verifyPayment(token: string, payload: VerifyPaymentPayload): Promise<SinglePaymentResponse> {
+    const response = await fetch(`${API_BASE_URL}/payments/verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
     });
     return await handleResponse<SinglePaymentResponse>(response);
   }

@@ -19,7 +19,7 @@ import {
 import { Profile } from './Profile';
 import { UsersList } from './UsersList';
 import { CatalogManagement } from './CatalogManagement';
-import { api, type OrderData, type PaymentData } from '../services/api';
+import { api, type OrderData, type PaymentData, loadRazorpayScript, RAZORPAY_KEY_ID } from '../services/api';
 
 interface Product{
   id: number;
@@ -74,6 +74,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [paymentsError, setPaymentsError] = useState<string | null>(null);
+  const [payingOrderId, setPayingOrderId] = useState<number | null>(null);
 
   // Admin stats states
   const [totalProducts, setTotalProducts] = useState(0);
@@ -268,22 +269,103 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
 
   const handlePayOrder = async (orderId: number, paymentMethod: string) => {
     try {
+      setPayingOrderId(orderId);
       const response = await api.makePayment(token, { orderId, paymentMethod });
-      if (response && response.apiStatus && response.data) {
-        setToastMessage(`Payment of ₹${response.data.amount} processed! Status: ${response.data.paymentStatus}`);
-      } else {
-        setToastMessage('Payment completed successfully!');
-      }
-      setShowCartToast(true);
-      setTimeout(() => setShowCartToast(false), 3000);
+      
+      const razorpayOrderId = response?.data?.razorpayOrderId || (response?.data as any)?.razorpayodreid || (response?.data as any)?.razorpayorderid;
+      const razorpayKey = (response?.data as any)?.razorpayTestKeyId || (response?.data as any)?.razorpaytestkeyid || response?.data?.razorpayKeyId || response?.data?.keyId || RAZORPAY_KEY_ID;
+      const rawAmount = Number(response?.data?.amount || 0);
 
-      // Refresh orders
-      const orderResponse = userRole === 'ADMIN' ? await api.getAllOrders(token) : await api.getOrders(token);
-      const ordersList = orderResponse?.data?.content || (Array.isArray(orderResponse?.data) ? orderResponse.data : (Array.isArray(orderResponse) ? orderResponse : []));
-      setOrders(ordersList);
+      if (response && response.apiStatus && razorpayOrderId) {
+        // Load Razorpay checkout script
+        const isLoaded = await loadRazorpayScript();
+        if (!isLoaded) {
+          alert('Failed to load Razorpay checkout script. Please check your internet connection.');
+          setPayingOrderId(null);
+          return;
+        }
+
+        const options = {
+          key: razorpayKey,
+          amount: Math.round(rawAmount * 100), // Amount in paise
+          currency: 'INR',
+          name: 'E-Commerce Store',
+          description: `Payment for Order #${orderId}`,
+          order_id: razorpayOrderId,
+          handler: async (razorpayResponse: any) => {
+            try {
+              setToastMessage('Verifying payment with server...');
+              setShowCartToast(true);
+
+              const verifyPayload = {
+                razorpayOrderId: razorpayResponse.razorpay_order_id,
+                razorpayPaymentId: razorpayResponse.razorpay_payment_id,
+                razorpaySignature: razorpayResponse.razorpay_signature,
+                orderId: orderId
+              };
+
+              const verifyRes = await api.verifyPayment(token, verifyPayload);
+              setToastMessage(verifyRes?.message || 'Payment verified and completed successfully!');
+              setShowCartToast(true);
+              setTimeout(() => setShowCartToast(false), 4000);
+
+              // Refresh orders and payments
+              const orderResponse = userRole === 'ADMIN' ? await api.getAllOrders(token) : await api.getOrders(token);
+              const ordersList = orderResponse?.data?.content || (Array.isArray(orderResponse?.data) ? orderResponse.data : (Array.isArray(orderResponse) ? orderResponse : []));
+              setOrders(ordersList);
+
+              const paymentsResponse = await api.getMyPayments(token);
+              const paymentsList = paymentsResponse?.data?.content || (Array.isArray(paymentsResponse?.data) ? paymentsResponse.data : (Array.isArray(paymentsResponse) ? paymentsResponse : []));
+              setPayments(paymentsList);
+            } catch (verifyErr: any) {
+              console.error('Payment verification failed:', verifyErr);
+              alert(verifyErr.message || 'Payment verification failed. Please contact support.');
+            } finally {
+              setPayingOrderId(null);
+            }
+          },
+          prefill: {
+            name: response?.data?.userName || userEmail || '',
+            email: response?.data?.userEmail || userEmail || '',
+            method: paymentMethod === 'UPI' ? 'upi' : paymentMethod === 'NET_BANKING' ? 'netbanking' : 'card',
+          },
+          theme: {
+            color: '#4f46e5'
+          },
+          modal: {
+            ondismiss: function () {
+              setPayingOrderId(null);
+            }
+          }
+        };
+
+        const razorpayInstance = new (window as any).Razorpay(options);
+        razorpayInstance.on('payment.failed', function (resp: any) {
+          console.error('Razorpay payment failed:', resp.error);
+          alert(`Payment Failed: ${resp.error.description || resp.error.reason || 'Transaction could not be completed.'}`);
+          setPayingOrderId(null);
+        });
+        razorpayInstance.open();
+      } else {
+        // Direct response or fallback
+        if (response && response.apiStatus && response.data) {
+          setToastMessage(`Payment processed! Status: ${response.data.paymentStatus || 'COMPLETED'}`);
+        } else {
+          setToastMessage('Payment completed successfully!');
+        }
+        setShowCartToast(true);
+        setTimeout(() => setShowCartToast(false), 3000);
+
+        // Refresh orders
+        const orderResponse = userRole === 'ADMIN' ? await api.getAllOrders(token) : await api.getOrders(token);
+        const ordersList = orderResponse?.data?.content || (Array.isArray(orderResponse?.data) ? orderResponse.data : (Array.isArray(orderResponse) ? orderResponse : []));
+        setOrders(ordersList);
+        setPayingOrderId(null);
+      }
     } catch (err: any) {
       console.error('Failed to make payment:', err);
-      alert(err.message || 'Payment failed.');
+      alert(err.message || 'Payment initiation failed.');
+      setPayingOrderId(null);
     }
   };
 
@@ -1418,44 +1500,82 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                           </>
                         )}
                         {orderStatus === 'CREATED' && userRole !== 'ADMIN' && (
-                          <div style={{ display: 'flex', gap: '8px', marginTop: '12px', alignItems: 'center' }}>
-                            <select
-                              id={`payment-method-${currentOrderId}`}
-                              defaultValue="CARD"
-                              style={{
-                                background: '#ffffff',
-                                border: '1.5px solid #cbd5e1',
-                                borderRadius: '8px',
-                                padding: '6px 10px',
-                                color: '#0f172a',
-                                fontSize: '13px',
-                                fontWeight: 500,
-                                outline: 'none'
-                              }}
-                            >
-                              <option value="CARD" style={{ background: '#ffffff', color: '#0f172a' }}>Card</option>
-                              <option value="NET_BANKING" style={{ background: '#ffffff', color: '#0f172a' }}>Net Banking</option>
-                              <option value="UPI" style={{ background: '#ffffff', color: '#0f172a' }}>UPI</option>
-                            </select>
-                            <button
-                              onClick={() => {
-                                const el = document.getElementById(`payment-method-${currentOrderId}`) as HTMLSelectElement;
-                                handlePayOrder(currentOrderId, el ? el.value : 'CARD');
-                              }}
-                              style={{
-                                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                                border: 'none',
-                                borderRadius: '8px',
-                                padding: '7px 14px',
-                                color: 'white',
-                                fontSize: '13px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)'
-                              }}
-                            >
-                              Pay Now
-                            </button>
+                          <div style={{ marginTop: '12px' }}>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <select
+                                id={`payment-method-${currentOrderId}`}
+                                defaultValue="CARD"
+                                style={{
+                                  background: '#ffffff',
+                                  border: '1.5px solid #cbd5e1',
+                                  borderRadius: '8px',
+                                  padding: '6px 10px',
+                                  color: '#0f172a',
+                                  fontSize: '13px',
+                                  fontWeight: 500,
+                                  outline: 'none'
+                                }}
+                              >
+                                <option value="CARD" style={{ background: '#ffffff', color: '#0f172a' }}>Card</option>
+                                <option value="NET_BANKING" style={{ background: '#ffffff', color: '#0f172a' }}>Net Banking</option>
+                                <option value="UPI" style={{ background: '#ffffff', color: '#0f172a' }}>UPI</option>
+                              </select>
+                              <button
+                                disabled={payingOrderId === currentOrderId}
+                                onClick={() => {
+                                  const el = document.getElementById(`payment-method-${currentOrderId}`) as HTMLSelectElement;
+                                  handlePayOrder(currentOrderId, el ? el.value : 'CARD');
+                                }}
+                                style={{
+                                  background: payingOrderId === currentOrderId ? '#94a3b8' : 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                                  border: 'none',
+                                  borderRadius: '8px',
+                                  padding: '7px 14px',
+                                  color: 'white',
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                  cursor: payingOrderId === currentOrderId ? 'not-allowed' : 'pointer',
+                                  boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}
+                              >
+                                {payingOrderId === currentOrderId ? 'Processing...' : 'Pay Now'}
+                              </button>
+                            </div>
+
+                            {/* Demo Card Test Helper */}
+                            <div style={{
+                              marginTop: '8px',
+                              padding: '6px 10px',
+                              background: '#f1f5f9',
+                              border: '1px dashed #cbd5e1',
+                              borderRadius: '8px',
+                              fontSize: '11px',
+                              color: '#475569',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}>
+                              <span style={{ fontWeight: 700, color: '#334155' }}>💳 Test Card:</span>
+                              <span
+                                style={{ cursor: 'pointer', background: '#ffffff', padding: '2px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: 600, color: '#1e293b' }}
+                                title="Click to copy card number"
+                                onClick={() => {
+                                  navigator.clipboard.writeText('4100280000001007');
+                                  setToastMessage('Card copied: 4100 2800 0000 1007');
+                                  setShowCartToast(true);
+                                  setTimeout(() => setShowCartToast(false), 2000);
+                                }}
+                              >
+                                4100 2800 0000 1007 📋
+                              </span>
+                              <span>Exp: <strong style={{ color: '#0f172a' }}>12/26</strong></span>
+                              <span>CVV: <strong style={{ color: '#0f172a' }}>123</strong></span>
+                              <span>OTP: <strong style={{ color: '#0f172a' }}>123456</strong></span>
+                            </div>
                           </div>
                         )}
                       </div>
