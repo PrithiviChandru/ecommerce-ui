@@ -19,7 +19,7 @@ import {
 import { Profile } from './Profile';
 import { UsersList } from './UsersList';
 import { CatalogManagement } from './CatalogManagement';
-import { api, type OrderData, type PaymentData, loadRazorpayScript, RAZORPAY_KEY_ID } from '../services/api';
+import { api, type OrderData, type PaymentData, loadRazorpayScript } from '../services/api';
 
 interface Product{
   id: number;
@@ -108,11 +108,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
       const [prodResponse, catResponse, usersResponse] = await Promise.all([
         api.getProducts(token, 0, 1),
         api.getCategories(token, 0, 1),
-        api.getUsers(token)
+        api.getUsers(token, 0, 1)
       ]);
-      setTotalProducts(prodResponse?.data?.totalElements || 0);
-      setTotalCategories(catResponse?.data?.totalElements || 0);
-      setTotalUsers(usersResponse?.data?.length || 0);
+      setTotalProducts(prodResponse?.data?.totalElements ?? (Array.isArray(prodResponse?.data?.content) ? prodResponse.data.content.length : (Array.isArray(prodResponse?.data) ? prodResponse.data.length : 0)));
+      setTotalCategories(catResponse?.data?.totalElements ?? (Array.isArray(catResponse?.data?.content) ? catResponse.data.content.length : (Array.isArray(catResponse?.data) ? catResponse.data.length : 0)));
+      setTotalUsers(usersResponse?.data?.totalElements ?? (Array.isArray(usersResponse?.data?.content) ? usersResponse.data.content.length : (Array.isArray(usersResponse?.data) ? usersResponse.data.length : 0)));
     } catch (err) {
       console.error('Failed to fetch admin stats:', err);
     } finally {
@@ -272,11 +272,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
       setPayingOrderId(orderId);
       const response = await api.makePayment(token, { orderId, paymentMethod });
       
-      const razorpayOrderId = response?.data?.razorpayOrderId || (response?.data as any)?.razorpayodreid || (response?.data as any)?.razorpayorderid;
-      const razorpayKey = (response?.data as any)?.razorpayTestKeyId || (response?.data as any)?.razorpaytestkeyid || response?.data?.razorpayKeyId || response?.data?.keyId || RAZORPAY_KEY_ID;
+      const razorpayOrderId = response?.data?.razorpayOrderId;
+      const razorpayKey = response?.data?.razorpayKeyId;
       const rawAmount = Number(response?.data?.amount || 0);
 
-      if (response && response.apiStatus && razorpayOrderId) {
+      if (response && response.apiStatus && razorpayOrderId && razorpayKey) {
         // Load Razorpay checkout script
         const isLoaded = await loadRazorpayScript();
         if (!isLoaded) {
@@ -1574,7 +1574,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
                               </span>
                               <span>Exp: <strong style={{ color: '#0f172a' }}>12/26</strong></span>
                               <span>CVV: <strong style={{ color: '#0f172a' }}>123</strong></span>
-                              <span>OTP: <strong style={{ color: '#0f172a' }}>123456</strong></span>
                             </div>
                           </div>
                         )}

@@ -1,6 +1,5 @@
 // E-commerce API Client Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
-export const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TdNWU37S2ChC6s';
 
 export interface User {
   id: string;
@@ -91,10 +90,19 @@ export interface UserListItem {
   updatedAt: string;
 }
 
+export interface PaginatedUsers {
+  content: UserListItem[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+  last?: boolean;
+}
+
 export interface UsersResponse {
   apiStatus: boolean;
   message: string;
-  data: UserListItem[];
+  data: PaginatedUsers | UserListItem[] | any;
   errors: any;
   timeStamp: string;
 }
@@ -303,16 +311,25 @@ export const api = {
   },
 
   /**
-   * Fetch users list
+   * Fetch users list with pagination and sorting
    */
-  async getUsers(token: string): Promise<UsersResponse> {
-    const response = await fetch(`${API_BASE_URL}/users`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+  async getUsers(
+    token: string,
+    page = 0,
+    size = 50,
+    sortBy = 'id',
+    sortDir = 'asc'
+  ): Promise<UsersResponse> {
+    const response = await fetch(
+      `${API_BASE_URL}/users?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
       }
-    });
+    );
     return await handleResponse<UsersResponse>(response);
   },
 
