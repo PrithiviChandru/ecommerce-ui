@@ -1,5 +1,6 @@
 // E-commerce API Client Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
+const API_BASE_URL = 'https://ecommerce-api-qz3n.onrender.com/api';
+// const API_BASE_URL = 'http://localhost:8081/api';
 
 export interface User {
   id: string;
