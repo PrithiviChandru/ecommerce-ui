@@ -19,7 +19,7 @@ import {
 import { Profile } from './Profile';
 import { UsersList } from './UsersList';
 import { CatalogManagement } from './CatalogManagement';
-import { api } from '../services/api';
+import { api, type OrderData, type PaymentData, loadRazorpayScript } from '../services/api';
 
 interface Product{
   id: number;
@@ -66,14 +66,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
   // Cart & Order states
   const [showCartDrawer, setShowCartDrawer] = useState(false);
   const [placingOrder, setPlacingOrder] = useState(false);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<OrderData[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
 
   // Payment states
-  const [payments, setPayments] = useState<any[]>([]);
+  const [payments, setPayments] = useState<PaymentData[]>([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [paymentsError, setPaymentsError] = useState<string | null>(null);
+  const [payingOrderId, setPayingOrderId] = useState<number | null>(null);
 
   // Admin stats states
   const [totalProducts, setTotalProducts] = useState(0);
@@ -107,11 +108,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
       const [prodResponse, catResponse, usersResponse] = await Promise.all([
         api.getProducts(token, 0, 1),
         api.getCategories(token, 0, 1),
-        api.getUsers(token)
+        api.getUsers(token, 0, 1)
       ]);
-      setTotalProducts(prodResponse?.data?.totalElements || 0);
-      setTotalCategories(catResponse?.data?.totalElements || 0);
-      setTotalUsers(usersResponse?.data?.length || 0);
+      setTotalProducts(prodResponse?.data?.totalElements ?? (Array.isArray(prodResponse?.data?.content) ? prodResponse.data.content.length : (Array.isArray(prodResponse?.data) ? prodResponse.data.length : 0)));
+      setTotalCategories(catResponse?.data?.totalElements ?? (Array.isArray(catResponse?.data?.content) ? catResponse.data.content.length : (Array.isArray(catResponse?.data) ? catResponse.data.length : 0)));
+      setTotalUsers(usersResponse?.data?.totalElements ?? (Array.isArray(usersResponse?.data?.content) ? usersResponse.data.content.length : (Array.isArray(usersResponse?.data) ? usersResponse.data.length : 0)));
     } catch (err) {
       console.error('Failed to fetch admin stats:', err);
     } finally {
@@ -191,15 +192,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
           setOrdersLoading(true);
           setOrdersError(null);
           const response = userRole === 'ADMIN' ? await api.getAllOrders(token) : await api.getOrders(token);
-          if (response && response.apiStatus && Array.isArray(response.data)) {
-            setOrders(response.data);
-          } else if (Array.isArray(response)) {
-            setOrders(response);
-          } else if (response && Array.isArray(response.data)) {
-            setOrders(response.data);
-          } else {
-            setOrders([]);
-          }
+          const ordersList = response?.data?.content || (Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []));
+          setOrders(ordersList);
         } catch (err: any) {
           console.error('Failed to fetch orders:', err);
           setOrdersError(err.message || 'Failed to fetch orders');
@@ -218,15 +212,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
           setPaymentsLoading(true);
           setPaymentsError(null);
           const response = await api.getMyPayments(token);
-          if (response && response.apiStatus && Array.isArray(response.data)) {
-            setPayments(response.data);
-          } else if (Array.isArray(response)) {
-            setPayments(response);
-          } else if (response && Array.isArray(response.data)) {
-            setPayments(response.data);
-          } else {
-            setPayments([]);
-          }
+          const paymentsList = response?.data?.content || (Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []));
+          setPayments(paymentsList);
         } catch (err: any) {
           console.error('Failed to fetch payments:', err);
           setPaymentsError(err.message || 'Failed to fetch payments');
@@ -247,10 +234,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
         quantity
       }));
 
-      // Place each order sequentially
-      for (const item of cartItems) {
-        await api.createOrder(token, item);
-      }
+      await api.createOrder(token, { items: cartItems });
 
       setCart({});
       setShowCartDrawer(false);
@@ -269,17 +253,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
   const handleCancelOrder = async (orderId: number) => {
     if (!window.confirm('Are you sure you want to cancel this order?')) return;
     try {
-      await api.cancelOrder(token, orderId);
+      const cancelRes = await api.cancelOrder(token, orderId);
       // Refresh the orders list
       const response = userRole === 'ADMIN' ? await api.getAllOrders(token) : await api.getOrders(token);
-      if (response && response.apiStatus && Array.isArray(response.data)) {
-        setOrders(response.data);
-      } else if (Array.isArray(response)) {
-        setOrders(response);
-      } else if (response && Array.isArray(response.data)) {
-        setOrders(response.data);
-      }
-      setToastMessage('Order cancelled successfully.');
+      const ordersList = response?.data?.content || (Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []));
+      setOrders(ordersList);
+      setToastMessage(cancelRes?.message || 'Order cancelled successfully.');
       setShowCartToast(true);
       setTimeout(() => setShowCartToast(false), 3000);
     } catch (err: any) {
@@ -290,27 +269,103 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
 
   const handlePayOrder = async (orderId: number, paymentMethod: string) => {
     try {
+      setPayingOrderId(orderId);
       const response = await api.makePayment(token, { orderId, paymentMethod });
-      if (response && response.apiStatus && response.data) {
-        setToastMessage(`Payment of ₹${response.data.amount} processed! Status: ${response.data.paymentStatus}`);
-      } else {
-        setToastMessage('Payment completed successfully!');
-      }
-      setShowCartToast(true);
-      setTimeout(() => setShowCartToast(false), 3000);
+      
+      const razorpayOrderId = response?.data?.razorpayOrderId;
+      const razorpayKey = response?.data?.razorpayKeyId;
+      const rawAmount = Number(response?.data?.amount || 0);
 
-      // Refresh orders
-      const orderResponse = userRole === 'ADMIN' ? await api.getAllOrders(token) : await api.getOrders(token);
-      if (orderResponse && orderResponse.apiStatus && Array.isArray(orderResponse.data)) {
-        setOrders(orderResponse.data);
-      } else if (Array.isArray(orderResponse)) {
-        setOrders(orderResponse);
-      } else if (orderResponse && Array.isArray(orderResponse.data)) {
-        setOrders(orderResponse.data);
+      if (response && response.apiStatus && razorpayOrderId && razorpayKey) {
+        // Load Razorpay checkout script
+        const isLoaded = await loadRazorpayScript();
+        if (!isLoaded) {
+          alert('Failed to load Razorpay checkout script. Please check your internet connection.');
+          setPayingOrderId(null);
+          return;
+        }
+
+        const options = {
+          key: razorpayKey,
+          amount: Math.round(rawAmount * 100), // Amount in paise
+          currency: 'INR',
+          name: 'E-Commerce Store',
+          description: `Payment for Order #${orderId}`,
+          order_id: razorpayOrderId,
+          handler: async (razorpayResponse: any) => {
+            try {
+              setToastMessage('Verifying payment with server...');
+              setShowCartToast(true);
+
+              const verifyPayload = {
+                razorpayOrderId: razorpayResponse.razorpay_order_id,
+                razorpayPaymentId: razorpayResponse.razorpay_payment_id,
+                razorpaySignature: razorpayResponse.razorpay_signature,
+                orderId: orderId
+              };
+
+              const verifyRes = await api.verifyPayment(token, verifyPayload);
+              setToastMessage(verifyRes?.message || 'Payment verified and completed successfully!');
+              setShowCartToast(true);
+              setTimeout(() => setShowCartToast(false), 4000);
+
+              // Refresh orders and payments
+              const orderResponse = userRole === 'ADMIN' ? await api.getAllOrders(token) : await api.getOrders(token);
+              const ordersList = orderResponse?.data?.content || (Array.isArray(orderResponse?.data) ? orderResponse.data : (Array.isArray(orderResponse) ? orderResponse : []));
+              setOrders(ordersList);
+
+              const paymentsResponse = await api.getMyPayments(token);
+              const paymentsList = paymentsResponse?.data?.content || (Array.isArray(paymentsResponse?.data) ? paymentsResponse.data : (Array.isArray(paymentsResponse) ? paymentsResponse : []));
+              setPayments(paymentsList);
+            } catch (verifyErr: any) {
+              console.error('Payment verification failed:', verifyErr);
+              alert(verifyErr.message || 'Payment verification failed. Please contact support.');
+            } finally {
+              setPayingOrderId(null);
+            }
+          },
+          prefill: {
+            name: response?.data?.userName || userEmail || '',
+            email: response?.data?.userEmail || userEmail || '',
+            method: paymentMethod === 'UPI' ? 'upi' : paymentMethod === 'NET_BANKING' ? 'netbanking' : 'card',
+          },
+          theme: {
+            color: '#4f46e5'
+          },
+          modal: {
+            ondismiss: function () {
+              setPayingOrderId(null);
+            }
+          }
+        };
+
+        const razorpayInstance = new (window as any).Razorpay(options);
+        razorpayInstance.on('payment.failed', function (resp: any) {
+          console.error('Razorpay payment failed:', resp.error);
+          alert(`Payment Failed: ${resp.error.description || resp.error.reason || 'Transaction could not be completed.'}`);
+          setPayingOrderId(null);
+        });
+        razorpayInstance.open();
+      } else {
+        // Direct response or fallback
+        if (response && response.apiStatus && response.data) {
+          setToastMessage(`Payment processed! Status: ${response.data.paymentStatus || 'COMPLETED'}`);
+        } else {
+          setToastMessage('Payment completed successfully!');
+        }
+        setShowCartToast(true);
+        setTimeout(() => setShowCartToast(false), 3000);
+
+        // Refresh orders
+        const orderResponse = userRole === 'ADMIN' ? await api.getAllOrders(token) : await api.getOrders(token);
+        const ordersList = orderResponse?.data?.content || (Array.isArray(orderResponse?.data) ? orderResponse.data : (Array.isArray(orderResponse) ? orderResponse : []));
+        setOrders(ordersList);
+        setPayingOrderId(null);
       }
     } catch (err: any) {
       console.error('Failed to make payment:', err);
-      alert(err.message || 'Payment failed.');
+      alert(err.message || 'Payment initiation failed.');
+      setPayingOrderId(null);
     }
   };
 
@@ -1377,124 +1432,190 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {orders.map((order: any) => (
-                  <div key={order.orderId} style={{
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '16px',
-                    padding: '20px',
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: '16px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
-                  }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
-                          Order #{order.orderId}
-                        </span>
-                        <span style={{
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          padding: '3px 8px',
-                          borderRadius: '12px',
-                          background: order.status === 'CREATED' ? '#dbeafe' : order.status === 'CANCELLED' ? '#fee2e2' : '#d1fae5',
-                          color: order.status === 'CREATED' ? '#1d4ed8' : order.status === 'CANCELLED' ? '#b91c1c' : '#047857',
-                          textTransform: 'uppercase'
-                        }}>
-                          {order.status}
-                        </span>
-                      </div>
-                      {userRole === 'ADMIN' && order.userName && (
-                        <div style={{ fontSize: '13px', color: '#475569', marginBottom: '4px' }}>
-                          Customer: <strong style={{ color: '#0f172a' }}>{order.userName}</strong> (User #{order.userId})
+                {orders.map((order: any) => {
+                  const currentOrderId = order.id ?? order.orderId;
+                  const orderItems: any[] = Array.isArray(order.items) ? order.items : Array.isArray(order.orderItems) ? order.orderItems : [];
+                  const hasItems = orderItems.length > 0;
+                  const orderStatus = order.status || order.orderStatus || 'CREATED';
+                  const total = order.totalAmount ?? order.total ?? order.amount ?? (order.price && order.quantity ? order.price * order.quantity : 0);
+
+                  return (
+                    <div key={currentOrderId} style={{
+                      background: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '16px',
+                      padding: '20px',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '16px',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
+                    }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
+                            Order #{currentOrderId}
+                          </span>
+                          <span style={{
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            background: orderStatus === 'CREATED' ? '#dbeafe' : orderStatus === 'CANCELLED' ? '#fee2e2' : '#d1fae5',
+                            color: orderStatus === 'CREATED' ? '#1d4ed8' : orderStatus === 'CANCELLED' ? '#b91c1c' : '#047857',
+                            textTransform: 'uppercase'
+                          }}>
+                            {orderStatus}
+                          </span>
                         </div>
-                      )}
-                      <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#4338ca', margin: '0 0 4px' }}>
-                        {order.productName}
-                      </h4>
-                      <div style={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>
-                        Quantity: <strong style={{ color: '#0f172a' }}>{order.quantity}</strong> | Price: <strong style={{ color: '#0f172a' }}>₹{order.price}</strong>
-                      </div>
-                      {order.status === 'CREATED' && userRole !== 'ADMIN' && (
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px', alignItems: 'center' }}>
-                          <select
-                            id={`payment-method-${order.orderId}`}
-                            defaultValue="UPI"
-                            style={{
-                              background: '#ffffff',
-                              border: '1.5px solid #cbd5e1',
-                              borderRadius: '8px',
+                        {userRole === 'ADMIN' && (order.userName || order.user?.name || order.user?.firstName) && (
+                          <div style={{ fontSize: '13px', color: '#475569', marginBottom: '4px' }}>
+                            Customer: <strong style={{ color: '#0f172a' }}>{order.userName || order.user?.name || `${order.user?.firstName || ''} ${order.user?.lastName || ''}`.trim()}</strong> {order.userId ? `(User #${order.userId})` : ''}
+                          </div>
+                        )}
+                        {hasItems ? (
+                          <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {orderItems.map((item: any, idx: number) => (
+                              <div key={idx} style={{ fontSize: '13px', color: '#475569', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <strong style={{ color: '#4338ca' }}>{item.productName || item.product?.name || `Product #${item.productId}`}</strong>
+                                <span style={{ color: '#64748b' }}>×</span>
+                                <strong style={{ color: '#0f172a' }}>{item.quantity}</strong>
+                                {item.price != null && (
+                                  <span style={{ color: '#64748b' }}>
+                                    (₹{item.price} each{item.subTotal != null ? ` = ₹${item.subTotal}` : ''})
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <>
+                            <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#4338ca', margin: '0 0 4px' }}>
+                              {order.productName || `Order #${currentOrderId}`}
+                            </h4>
+                            <div style={{ fontSize: '13px', color: '#475569', fontWeight: 500 }}>
+                              Quantity: <strong style={{ color: '#0f172a' }}>{order.quantity}</strong> {order.price != null && <>| Price: <strong style={{ color: '#0f172a' }}>₹{order.price}</strong></>}
+                            </div>
+                          </>
+                        )}
+                        {orderStatus === 'CREATED' && userRole !== 'ADMIN' && (
+                          <div style={{ marginTop: '12px' }}>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <select
+                                id={`payment-method-${currentOrderId}`}
+                                defaultValue="CARD"
+                                style={{
+                                  background: '#ffffff',
+                                  border: '1.5px solid #cbd5e1',
+                                  borderRadius: '8px',
+                                  padding: '6px 10px',
+                                  color: '#0f172a',
+                                  fontSize: '13px',
+                                  fontWeight: 500,
+                                  outline: 'none'
+                                }}
+                              >
+                                <option value="CARD" style={{ background: '#ffffff', color: '#0f172a' }}>Card</option>
+                                <option value="NET_BANKING" style={{ background: '#ffffff', color: '#0f172a' }}>Net Banking</option>
+                                <option value="UPI" style={{ background: '#ffffff', color: '#0f172a' }}>UPI</option>
+                              </select>
+                              <button
+                                disabled={payingOrderId === currentOrderId}
+                                onClick={() => {
+                                  const el = document.getElementById(`payment-method-${currentOrderId}`) as HTMLSelectElement;
+                                  handlePayOrder(currentOrderId, el ? el.value : 'CARD');
+                                }}
+                                style={{
+                                  background: payingOrderId === currentOrderId ? '#94a3b8' : 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                                  border: 'none',
+                                  borderRadius: '8px',
+                                  padding: '7px 14px',
+                                  color: 'white',
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                  cursor: payingOrderId === currentOrderId ? 'not-allowed' : 'pointer',
+                                  boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}
+                              >
+                                {payingOrderId === currentOrderId ? 'Processing...' : 'Pay Now'}
+                              </button>
+                            </div>
+
+                            {/* Demo Card Test Helper */}
+                            <div style={{
+                              marginTop: '8px',
                               padding: '6px 10px',
-                              color: '#0f172a',
-                              fontSize: '13px',
-                              fontWeight: 500,
-                              outline: 'none'
-                            }}
-                          >
-                            <option value="UPI" style={{ background: '#ffffff', color: '#0f172a' }}>UPI</option>
-                            <option value="CARD" style={{ background: '#ffffff', color: '#0f172a' }}>Card</option>
-                            <option value="NET_BANKING" style={{ background: '#ffffff', color: '#0f172a' }}>Net Banking</option>
-                          </select>
-                          <button
-                            onClick={() => {
-                              const el = document.getElementById(`payment-method-${order.orderId}`) as HTMLSelectElement;
-                              handlePayOrder(order.orderId, el ? el.value : 'UPI');
-                            }}
-                            style={{
-                              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                              border: 'none',
+                              background: '#f1f5f9',
+                              border: '1px dashed #cbd5e1',
                               borderRadius: '8px',
-                              padding: '7px 14px',
-                              color: 'white',
-                              fontSize: '13px',
+                              fontSize: '11px',
+                              color: '#475569',
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}>
+                              <span style={{ fontWeight: 700, color: '#334155' }}>💳 Test Card:</span>
+                              <span
+                                style={{ cursor: 'pointer', background: '#ffffff', padding: '2px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: 600, color: '#1e293b' }}
+                                title="Click to copy card number"
+                                onClick={() => {
+                                  navigator.clipboard.writeText('4100280000001007');
+                                  setToastMessage('Card copied: 4100 2800 0000 1007');
+                                  setShowCartToast(true);
+                                  setTimeout(() => setShowCartToast(false), 2000);
+                                }}
+                              >
+                                4100 2800 0000 1007 📋
+                              </span>
+                              <span>Exp: <strong style={{ color: '#0f172a' }}>12/26</strong></span>
+                              <span>CVV: <strong style={{ color: '#0f172a' }}>123</strong></span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <div style={{ fontSize: '19px', fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
+                          Total: ₹{total}
+                        </div>
+                        {order.createdAt && (
+                          <div style={{ fontSize: '12px', color: '#64748b' }}>
+                            Ordered: {new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        )}
+                        {orderStatus !== 'CANCELLED' && (
+                          <button
+                            onClick={() => handleCancelOrder(currentOrderId)}
+                            style={{
+                              marginTop: '8px',
+                              background: '#fef2f2',
+                              border: '1px solid #fecaca',
+                              borderRadius: '8px',
+                              padding: '6px 12px',
+                              color: '#dc2626',
+                              fontSize: '12px',
                               fontWeight: 600,
                               cursor: 'pointer',
-                              boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)'
+                              transition: 'var(--transition-fast)'
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.background = '#fee2e2';
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.background = '#fef2f2';
                             }}
                           >
-                            Pay Now
+                            Cancel Order
                           </button>
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                      <div style={{ fontSize: '19px', fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
-                        Total: ₹{order.totalAmount}
+                        )}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>
-                        Ordered: {new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                      {order.status !== 'CANCELLED' && (
-                        <button
-                          onClick={() => handleCancelOrder(order.orderId)}
-                          style={{
-                            marginTop: '8px',
-                            background: '#fef2f2',
-                            border: '1px solid #fecaca',
-                            borderRadius: '8px',
-                            padding: '6px 12px',
-                            color: '#dc2626',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            transition: 'var(--transition-fast)'
-                          }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.background = '#fee2e2';
-                          }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.background = '#fef2f2';
-                          }}
-                        >
-                          Cancel Order
-                        </button>
-                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1601,7 +1722,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ userEmail, token, onLogout
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {payments.map((payment: any) => (
+                {payments.map((payment: PaymentData) => (
                   <div key={payment.id} style={{
                     background: '#ffffff',
                     border: '1px solid #e2e8f0',

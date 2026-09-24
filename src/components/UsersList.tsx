@@ -1,5 +1,23 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Users, Search, Shield, Mail, Calendar, Clock, AlertCircle, Phone, Globe, RefreshCw, X, Trash2 } from 'lucide-react';
+import { 
+  Users, 
+  Search, 
+  Shield, 
+  Mail, 
+  Calendar, 
+  Clock, 
+  AlertCircle, 
+  Phone, 
+  Globe, 
+  RefreshCw, 
+  X, 
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
+} from 'lucide-react';
 import { api } from '../services/api';
 import type { UserListItem } from '../services/api';
 
@@ -14,6 +32,14 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<'All' | 'ADMIN' | 'USER'>('All');
+
+  // Pagination & Sorting States
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortBy, setSortBy] = useState('id');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
 
   // Detail Modal States
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
@@ -31,12 +57,16 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
       setDeleteLoading(true);
       setDeleteError(null);
       const response = await api.deleteUser(token, id);
-      if (response.apiStatus && response.data.success) {
+      if (response.apiStatus && response.data?.success) {
         setSelectedUserId(null);
         setShowDeleteConfirm(false);
-        fetchUsers();
+        if (users.length === 1 && page > 0) {
+          setPage(p => p - 1);
+        } else {
+          fetchUsers();
+        }
       } else {
-        setDeleteError(response.message || response.data.message || 'Failed to delete user.');
+        setDeleteError(response.message || response.data?.message || 'Failed to delete user.');
       }
     } catch (err: any) {
       console.error('Delete user error:', err);
@@ -82,11 +112,20 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.getUsers(token);
-      if (response.apiStatus) {
-        setUsers(response.data || []);
+      const response = await api.getUsers(token, page, pageSize, sortBy, sortDir);
+      if (response && response.apiStatus !== false) {
+        const fetchedList: UserListItem[] = 
+          response?.data?.content || 
+          (Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []));
+        setUsers(fetchedList);
+        
+        const total = response?.data?.totalElements ?? (Array.isArray(response?.data) ? response.data.length : fetchedList.length);
+        const pages = response?.data?.totalPages ?? (Array.isArray(response?.data) ? Math.ceil(response.data.length / pageSize) : Math.ceil(total / pageSize) || 1);
+        
+        setTotalElements(total);
+        setTotalPages(pages);
       } else {
-        setError(response.message || 'Failed to retrieve users list.');
+        setError(response?.message || 'Failed to retrieve users list.');
       }
     } catch (err: any) {
       console.error('Fetch users error:', err);
@@ -98,18 +137,29 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
 
   useEffect(() => {
     fetchUsers();
-  }, [token]);
+  }, [token, page, pageSize, sortBy, sortDir]);
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortDir(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(field);
+      setSortDir('asc');
+    }
+    setPage(0);
+  };
 
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       const matchesRole = selectedRole === 'All' || u.role === selectedRole;
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = 
-        u.firstName.toLowerCase().includes(searchLower) ||
-        u.lastName.toLowerCase().includes(searchLower) ||
-        u.email.toLowerCase().includes(searchLower) ||
-        (u.phone && u.phone.includes(searchLower)) ||
-        u.timeZone.toLowerCase().includes(searchLower);
+        (u.firstName && u.firstName.toLowerCase().includes(searchLower)) ||
+        (u.lastName && u.lastName.toLowerCase().includes(searchLower)) ||
+        (u.email && u.email.toLowerCase().includes(searchLower)) ||
+        (u.phone && u.phone.toLowerCase().includes(searchLower)) ||
+        (u.timeZone && u.timeZone.toLowerCase().includes(searchLower)) ||
+        String(u.id).includes(searchLower);
       return matchesRole && matchesSearch;
     });
   }, [users, searchQuery, selectedRole]);
@@ -125,6 +175,17 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
     } catch {
       return dateString;
     }
+  };
+
+  const renderSortIcon = (field: string) => {
+    if (sortBy !== field) {
+      return <ArrowUpDown size={12} style={{ color: '#94a3b8', marginLeft: '4px' }} />;
+    }
+    return sortDir === 'asc' ? (
+      <ArrowUp size={12} style={{ color: 'var(--primary-600)', marginLeft: '4px' }} />
+    ) : (
+      <ArrowDown size={12} style={{ color: 'var(--primary-600)', marginLeft: '4px' }} />
+    );
   };
 
   return (
@@ -239,7 +300,7 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
           <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
           <input
             type="text"
-            placeholder="Search by name, email, timezone..."
+            placeholder="Search by name, email, timezone, ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -275,28 +336,59 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
           )}
         </div>
 
-        {/* Role Filters */}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {(['All', 'ADMIN', 'USER'] as const).map((role) => (
-            <button
-              key={role}
-              onClick={() => setSelectedRole(role)}
+        {/* Filters & Page Size controls */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Role Filters */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {(['All', 'ADMIN', 'USER'] as const).map((role) => (
+              <button
+                key={role}
+                onClick={() => setSelectedRole(role)}
+                style={{
+                  background: selectedRole === role ? 'var(--primary-600)' : '#ffffff',
+                  border: selectedRole === role ? '1px solid var(--primary-600)' : '1.5px solid #cbd5e1',
+                  color: selectedRole === role ? '#ffffff' : '#334155',
+                  padding: '8px 16px',
+                  borderRadius: '20px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'var(--transition-fast)',
+                  boxShadow: selectedRole === role ? '0 4px 12px rgba(79, 70, 229, 0.25)' : 'none'
+                }}
+              >
+                {role}
+              </button>
+            ))}
+          </div>
+
+          {/* Rows Per Page */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#475569' }}>
+            <span>Rows:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(0);
+              }}
               style={{
-                background: selectedRole === role ? 'var(--primary-600)' : '#ffffff',
-                border: selectedRole === role ? '1px solid var(--primary-600)' : '1.5px solid #cbd5e1',
-                color: selectedRole === role ? '#ffffff' : '#334155',
-                padding: '8px 16px',
-                borderRadius: '20px',
+                padding: '6px 10px',
+                borderRadius: '8px',
+                border: '1.5px solid #cbd5e1',
+                background: '#ffffff',
                 fontSize: '13px',
                 fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'var(--transition-fast)',
-                boxShadow: selectedRole === role ? '0 4px 12px rgba(79, 70, 229, 0.25)' : 'none'
+                color: '#1e293b',
+                outline: 'none',
+                cursor: 'pointer'
               }}
             >
-              {role}
-            </button>
-          ))}
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -375,9 +467,38 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
-                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>User Details</th>
-                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Role</th>
-                  <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phone / Timezone</th>
+                  <th 
+                    onClick={() => handleSort('firstName')}
+                    style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                      User Details {renderSortIcon('firstName')}
+                    </span>
+                  </th>
+                  <th 
+                    onClick={() => handleSort('role')}
+                    style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                      Role {renderSortIcon('role')}
+                    </span>
+                  </th>
+                  <th 
+                    onClick={() => handleSort('timeZone')}
+                    style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                      Phone / Timezone {renderSortIcon('timeZone')}
+                    </span>
+                  </th>
+                  <th 
+                    onClick={() => handleSort('id')}
+                    style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                      ID {renderSortIcon('id')}
+                    </span>
+                  </th>
                   <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
@@ -466,6 +587,13 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
                         </div>
                       </td>
 
+                      {/* User ID */}
+                      <td style={{ padding: '16px 24px' }}>
+                        <span style={{ fontSize: '13px', color: '#475569', fontWeight: 600 }}>
+                          #{user.id}
+                        </span>
+                      </td>
+
                       {/* Actions */}
                       <td style={{ padding: '16px 24px', textAlign: 'center' }}>
                         {!isAdmin && (
@@ -507,10 +635,61 @@ export const UsersList: React.FC<UsersListProps> = ({ token, onBack }) => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Footer */}
           <div style={{ padding: '16px 24px', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
             <span style={{ fontSize: '13px', color: '#475569' }}>
-              Total: <strong>{filteredUsers.length}</strong> user accounts shown
+              Showing <strong>{filteredUsers.length}</strong> of <strong>{totalElements}</strong> user accounts
             </span>
+
+            {/* Pagination controls */}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                disabled={page === 0 || loading}
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                style={{
+                  background: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                  color: page === 0 ? '#94a3b8' : '#1e293b',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: page === 0 ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <ChevronLeft size={14} />
+                <span>Previous</span>
+              </button>
+
+              <span style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, padding: '0 8px' }}>
+                Page {page + 1} of {Math.max(1, totalPages)}
+              </span>
+
+              <button
+                disabled={page >= totalPages - 1 || loading}
+                onClick={() => setPage(p => p + 1)}
+                style={{
+                  background: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                  color: (page >= totalPages - 1) ? '#94a3b8' : '#1e293b',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: (page >= totalPages - 1) ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <span>Next</span>
+                <ChevronRight size={14} />
+              </button>
+            </div>
           </div>
         </div>
       )}
